@@ -38,20 +38,20 @@ const KundliGeneration = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-20 overflow-x-hidden">
       <CosmicBackground />
       
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-cosmic mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-cosmic mb-4 break-words">
             Generate Your Kundli
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-lg sm:text-xl text-muted-foreground px-4">
             Create your personalized birth chart and unlock cosmic insights
           </p>
         </motion.div>

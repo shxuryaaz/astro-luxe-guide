@@ -14,10 +14,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-20 overflow-x-hidden">
       <CosmicBackground />
       
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Hero Section */}
         <motion.div
           initial={{ y: 50, opacity: 0 }}
@@ -27,7 +27,7 @@ const Dashboard = () => {
         >
           <div className="space-y-6">
             <motion.h1 
-              className="text-5xl md:text-7xl font-serif font-bold text-cosmic"
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-cosmic break-words"
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -36,22 +36,22 @@ const Dashboard = () => {
             </motion.h1>
             
             <motion.div 
-              className="flex items-center justify-center gap-4"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <div className="text-6xl animate-float">{user.zodiacIcon}</div>
-              <div className="text-left">
-                <p className="text-xl text-muted-foreground">Your sign</p>
-                <p className="text-3xl font-serif font-semibold text-stardust">
+              <div className="text-5xl sm:text-6xl animate-float">{user.zodiacIcon}</div>
+              <div className="text-center sm:text-left">
+                <p className="text-lg sm:text-xl text-muted-foreground">Your sign</p>
+                <p className="text-2xl sm:text-3xl font-serif font-semibold text-stardust">
                   {user.zodiacSign}
                 </p>
               </div>
             </motion.div>
 
             <motion.p 
-              className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+              className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
