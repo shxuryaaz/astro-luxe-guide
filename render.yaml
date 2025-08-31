@@ -2,7 +2,7 @@ services:
   - type: web
     name: astro-oracle-backend
     env: node
-    plan: starter
+    plan: free
     buildCommand: cd server && npm install
     startCommand: cd server && npm start
     envVars:
