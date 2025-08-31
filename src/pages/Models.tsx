@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { CosmicBackground } from "@/components/ui/cosmic-background";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -83,10 +82,57 @@ const Models = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-20">
-      <CosmicBackground />
+    <div className="min-h-screen pt-20 relative overflow-hidden">
+      {/* Cosmic background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-purple-800/60 to-slate-800"></div>
       
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Animated stars */}
+      {[...Array(50)].map((_, i) => (
+        <motion.div
+          key={`star-${i}`}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 3 + 1}px`,
+            height: `${Math.random() * 3 + 1}px`,
+          }}
+          animate={{
+            opacity: [0.3, 1, 0.3],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 3,
+            delay: Math.random() * 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+      
+      {/* Floating particles */}
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [-20, -100],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: Math.random() * 3 + 2,
+            delay: Math.random() * 5,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      ))}
+      
+      <div className="max-w-6xl mx-auto px-6 py-8 relative z-10">
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

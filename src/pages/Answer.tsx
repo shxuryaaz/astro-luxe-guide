@@ -1,18 +1,33 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { CosmicBackground } from "@/components/ui/cosmic-background";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Sparkles, BookOpen, RefreshCw } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Download, Sparkles, BookOpen, RefreshCw, Loader2 } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { aiService } from "@/services/ai";
+import { kundliService } from "@/services/kundli";
+import { historyService } from "@/services/history";
+import { pdfService } from "@/services/pdf";
+import { getQuestionById, getCategoryById } from "@/config/questions";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Answer = () => {
   const [searchParams] = useSearchParams();
   const selectedModel = searchParams.get("model");
   const selectedQuestion = searchParams.get("question");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const [isGenerating, setIsGenerating] = useState(true);
   const [answer, setAnswer] = useState("");
+  const [kundliData, setKundliData] = useState<any>(null);
+  const [questionData, setQuestionData] = useState<any>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const questionTitles = {
     career: "Career Guidance",
@@ -30,11 +45,101 @@ const Answer = () => {
     lalkitab: "Lal Kitab",
   };
 
-  // Mock answer generation
+  // Generate answer using AI
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsGenerating(false);
-      setAnswer(`Based on your birth chart analysis through the ${modelNames[selectedModel as keyof typeof modelNames]} system, I can see significant planetary influences affecting your ${questionTitles[selectedQuestion as keyof typeof questionTitles].toLowerCase()}.
+    const generateAnswer = async () => {
+      if (!user || !selectedModel || !selectedQuestion) {
+        setIsGenerating(false);
+        return;
+      }
+
+      try {
+        // Get user's Kundli
+        const kundli = await kundliService.getUserKundli(user.id);
+        if (!kundli) {
+          toast({
+            title: "Kundli Required",
+            description: "Please generate your Kundli first.",
+            variant: "destructive",
+          });
+          navigate('/kundli');
+          return;
+        }
+
+        // Get question data - handle both category and specific question IDs
+        let question;
+        if (selectedQuestion.includes('_')) {
+          // Specific question ID (e.g., "career_1")
+          question = getQuestionById(selectedQuestion);
+        } else {
+          // Category ID (e.g., "career") - get the first question from that category
+          const category = getCategoryById(selectedQuestion);
+          if (category && category.questions.length > 0) {
+            question = category.questions[0];
+          }
+        }
+        
+        if (!question) {
+          toast({
+            title: "Question Not Found",
+            description: "The selected question could not be found.",
+            variant: "destructive",
+          });
+          navigate('/questions');
+          return;
+        }
+
+        setKundliData(kundli);
+        setQuestionData(question);
+
+        // Generate AI reading
+        const context = {
+          question,
+          kundliData: {
+            planetaryPositions: kundli.planetaryPositions || [],
+            ascendant: kundli.ascendant || { sign: "Unknown", degree: "0°" },
+            houses: kundli.houses || [],
+            nakshatra: kundli.nakshatra,
+            chandra_rasi: kundli.chandra_rasi,
+            soorya_rasi: kundli.soorya_rasi,
+            zodiac: kundli.zodiac,
+            additional_info: kundli.additional_info
+          },
+          userDetails: {
+            name: kundli.name,
+            dateOfBirth: kundli.dateOfBirth,
+            timeOfBirth: kundli.timeOfBirth,
+            placeOfBirth: kundli.placeOfBirth,
+          }
+        };
+
+        const aiAnswer = await aiService.generateBNNReading(context);
+        setAnswer(aiAnswer);
+
+        // Store in history
+        await historyService.storeQuestionHistory({
+          userId: user.id,
+          kundliId: kundli.id,
+          questionCategory: selectedQuestion,
+          modelUsed: selectedModel,
+          answer: aiAnswer,
+        });
+
+        toast({
+          title: "Reading Complete!",
+          description: "Your BNN reading has been generated successfully.",
+        });
+
+      } catch (error) {
+        console.error('Error generating answer:', error);
+        toast({
+          title: "Generation Failed",
+          description: "Failed to generate reading. Please try again.",
+          variant: "destructive",
+        });
+        
+        // Fallback to mock answer for demo
+        setAnswer(`Based on your birth chart analysis through the ${modelNames[selectedModel as keyof typeof modelNames]} system, I can see significant planetary influences affecting your ${questionTitles[selectedQuestion as keyof typeof questionTitles].toLowerCase()}.
 
 Your current planetary period (Mahadasha) is highly favorable for the question you've asked. The combination of Jupiter's benefic aspect on your 10th house and Venus's placement in the 11th house creates an excellent foundation for growth and success.
 
@@ -58,16 +163,117 @@ Your soul has chosen this lifetime to master the lessons related to ${questionTi
 The universe is conspiring to help you succeed. Stay aligned with your highest values and trust the divine timing of events unfolding in your life.
 
 Remember, astrology reveals potential - your conscious choices and actions determine the final outcome. Use this guidance as a cosmic compass while you navigate your journey.`);
-    }, 3000);
+      } finally {
+        setIsGenerating(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, [selectedModel, selectedQuestion]);
+    generateAnswer();
+  }, [user, selectedModel, selectedQuestion, navigate, toast]);
+
+  const handleDownloadPDF = async () => {
+    if (!answer || !kundliData || !questionData || !user) return;
+
+    setIsDownloading(true);
+
+    try {
+      const pdfBlob = await pdfService.generateComprehensiveReadingPDF({
+        userDetails: {
+          name: kundliData.name || "User",
+          dateOfBirth: kundliData.dateOfBirth || "",
+          timeOfBirth: kundliData.timeOfBirth || "",
+          placeOfBirth: kundliData.placeOfBirth || "",
+        },
+        question: {
+          text: questionData.text,
+          category: selectedQuestion || "",
+        },
+        reading: answer,
+        planetaryPositions: kundliData.planetaryPositions || [],
+      });
+
+      pdfService.downloadPDF(pdfBlob, `reading-${selectedQuestion}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Your reading has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleAskAnotherQuestion = () => {
+    navigate('/questions');
+  };
+
+  const handleShareReading = () => {
+    // Implement sharing functionality
+    toast({
+      title: "Sharing Coming Soon",
+      description: "Share functionality will be available soon.",
+    });
+  };
 
   return (
-    <div className="min-h-screen pt-20">
-      <CosmicBackground />
+    <div className="min-h-screen pt-20 relative overflow-hidden">
+      {/* Cosmic background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-purple-800/60 to-slate-800"></div>
       
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      {/* Animated stars */}
+      {[...Array(50)].map((_, i) => (
+        <motion.div
+          key={`star-${i}`}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 3 + 1}px`,
+            height: `${Math.random() * 3 + 1}px`,
+          }}
+          animate={{
+            opacity: [0.3, 1, 0.3],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 3,
+            delay: Math.random() * 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+      
+      {/* Floating particles */}
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [-20, -100],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: Math.random() * 3 + 2,
+            delay: Math.random() * 5,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      ))}
+      
+      <div className="max-w-4xl mx-auto px-6 py-8 relative z-10">
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -141,9 +347,23 @@ Remember, astrology reveals potential - your conscious choices and actions deter
                   className="space-y-6"
                 >
                   <div className="prose prose-invert max-w-none">
-                    <div className="whitespace-pre-line text-foreground leading-relaxed">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      className="text-foreground leading-relaxed space-y-4"
+                      components={{
+                        h1: ({children}) => <h1 className="text-2xl font-bold text-primary mb-4">{children}</h1>,
+                        h2: ({children}) => <h2 className="text-xl font-semibold text-primary mb-3">{children}</h2>,
+                        h3: ({children}) => <h3 className="text-lg font-semibold text-accent mb-2">{children}</h3>,
+                        p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                        strong: ({children}) => <strong className="text-primary font-semibold">{children}</strong>,
+                        em: ({children}) => <em className="text-accent italic">{children}</em>,
+                        ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-4 pl-4">{children}</ul>,
+                        li: ({children}) => <li className="mb-1">{children}</li>,
+                        blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">{children}</blockquote>,
+                      }}
+                    >
                       {answer}
-                    </div>
+                    </ReactMarkdown>
                   </div>
 
                   <div className="border-t border-primary/20 pt-6">
@@ -153,14 +373,28 @@ Remember, astrology reveals potential - your conscious choices and actions deter
                     </div>
 
                     <div className="flex flex-wrap gap-4">
-                      <Button variant="stardust" size="lg">
-                        <Download className="w-5 h-5 mr-2" />
-                        Download as PDF
+                      <Button 
+                        variant="stardust" 
+                        size="lg"
+                        onClick={handleDownloadPDF}
+                        disabled={isDownloading}
+                      >
+                        {isDownloading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Generating PDF...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-5 h-5 mr-2" />
+                            Download as PDF
+                          </>
+                        )}
                       </Button>
-                      <Button variant="glass" size="lg">
+                      <Button variant="glass" size="lg" onClick={handleAskAnotherQuestion}>
                         Ask Another Question
                       </Button>
-                      <Button variant="outline" size="lg">
+                      <Button variant="outline" size="lg" onClick={handleShareReading}>
                         Share Reading
                       </Button>
                     </div>
@@ -188,7 +422,7 @@ Remember, astrology reveals potential - your conscious choices and actions deter
                   or dive deeper with alternative astrological systems.
                 </p>
                 <div className="flex justify-center gap-4">
-                  <Button variant="cosmic">
+                  <Button variant="cosmic" onClick={handleAskAnotherQuestion}>
                     Ask New Question
                   </Button>
                   <Button variant="glass">

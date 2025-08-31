@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: astro-oracle-backend
+    env: node
+    plan: starter
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://your-frontend-domain.vercel.app
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PROKERALA_API_KEY
+        sync: false
+      - key: PROKERALA_CLIENT_SECRET
+        sync: false
+      - key: CHROMA_HOST
+        value: localhost
+      - key: CHROMA_PORT
+        value: 8000
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: MAX_FILE_SIZE
+        value: 10485760
