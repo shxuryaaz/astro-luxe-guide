@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://your-frontend-domain.vercel.app
+        value: https://astrometry-app.vercel.app
       - key: OPENAI_API_KEY
         sync: false
       - key: PROKERALA_API_KEY
