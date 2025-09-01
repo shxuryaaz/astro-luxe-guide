@@ -474,17 +474,39 @@ Your role is to provide accurate, professional astrological readings based EXCLU
 
 CRITICAL: You are consulting the ancient BNN manuscripts provided above and must provide guidance that aligns EXCLUSIVELY with this specific system. Do not mix other astrological systems or modern interpretations.
 
-Format your response with clear sections:
-- **Probability Assessment** (provide specific percentage likelihoods for different outcomes)
-- **Key Insights** (incorporating Nakshatra, Rashi, and additional details)
-- **Timing Analysis** (based on planetary positions and BNN timing rules)
-- **Favorable Factors** (highlighting positive combinations from the chart)
-- **Challenges to Navigate** (addressing potential obstacles)
-- **Recommended Actions** (including remedies based on birth stone, color, direction)
-- **Karmic Perspective** (understanding the deeper spiritual meaning)
-- **Spiritual Guidance** (connecting with the deity and spiritual path)
+Format your response EXACTLY in this structure:
 
-IMPORTANT: Always include specific probability percentages (e.g., "85% likelihood of success", "70% chance of positive outcome") based on the planetary combinations and BNN rules. These percentages should reflect the strength of planetary influences and their alignment with the question asked.
+**Step 1: Key Houses Analysis**
+- List the relevant houses and their planetary positions
+- Explain what each house signifies for the question
+
+**Step 2: Planetary Influences**
+- Detail how each planet affects the specific area of life
+- Connect planetary positions to outcomes
+
+**Step 3: BNN Yogas & Combinations**
+- Identify specific yogas from the BNN system
+- Explain their significance
+
+**Step 4: Probability Assessment**
+- Provide specific percentage likelihoods for different outcomes
+- Use format: "Probability: XX%" for each outcome
+- Base percentages on planetary strength and BNN rules
+
+**Step 5: Timeline Analysis**
+- Break down predictions by life stages (e.g., "Early Life (0-20 yrs)", "Youth (20-35 yrs)", etc.)
+- Include probabilities for each stage
+
+**Step 6: Strengths & Weaknesses**
+- List positive factors (✅ Strengths)
+- List challenges (⚠️ Weaknesses)
+
+**✅ Final Summary**
+- Overall probability assessment
+- Key recommendations
+- Most likely outcomes
+
+IMPORTANT: Always use the exact format shown above with clear sections, specific percentages, and structured analysis. Make the reading comprehensive and actionable.
 
 Remember: You are channeling the wisdom of Sage Bhrigu through the BNN system using the provided ancient knowledge. Make full use of ALL the Kundli details provided to give the most comprehensive and accurate reading possible.`;
 }
@@ -541,7 +563,7 @@ function createBNNUserPrompt(question, kundliData, userDetails) {
 - Enemy Yoni: ${kundliData.additional_info.enemy_yoni}`;
   }
 
-  return `Please provide a BNN (Bhrigu Nandi Nadi) reading for the following:
+  return `Please provide a comprehensive BNN (Bhrigu Nandi Nadi) reading for the following:
 
 **User Details:**
 - Name: ${userDetails.name}
@@ -562,7 +584,8 @@ ${planetaryInfo}
 **Houses Information:**
 ${kundliData.houses.map((house, index) => `House ${index + 1}: ${house.ruler || 'Not specified'}`).join('\n')}
 
-Please provide a comprehensive BNN reading that addresses the specific question while considering ALL the above Kundli details including Nakshatra, Rashi, and additional information. Focus on timing, specific predictions, and actionable guidance based EXCLUSIVELY on the BNN principles provided in the system context. Incorporate the Nakshatra characteristics, Rashi lordships, and additional details in your analysis.`;
+**Analysis Request:**
+Please provide a detailed BNN reading following the exact format specified in the system prompt. Include comprehensive analysis of houses, planetary influences, BNN yogas, probability percentages, timeline analysis, and actionable recommendations. Make the reading thorough and structured as per the BNN system principles.`;
 }
 
 // Get collection statistics
