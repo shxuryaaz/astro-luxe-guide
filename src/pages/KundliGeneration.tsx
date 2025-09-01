@@ -34,6 +34,7 @@ const KundliGeneration = () => {
     dateOfBirth: "",
     timeOfBirth: "",
     placeOfBirth: "",
+    gender: "",
   });
   
   const [kundliData, setKundliData] = useState<any>(null);
@@ -60,6 +61,7 @@ const KundliGeneration = () => {
           dateOfBirth: existingKundli.dateOfBirth,
           timeOfBirth: existingKundli.timeOfBirth,
           placeOfBirth: existingKundli.placeOfBirth,
+          gender: "",
         });
       }
     } catch (error) {
@@ -67,7 +69,7 @@ const KundliGeneration = () => {
     }
   };
 
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -310,6 +312,27 @@ const KundliGeneration = () => {
                         className="pl-10"
                         required
                       />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="gender" className="text-sm font-medium text-gray-200">
+                      Gender
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-300" />
+                      <select
+                        id="gender"
+                        value={formData.gender}
+                        onChange={handleInputChange("gender")}
+                        className="w-full pl-10 pr-3 py-2 bg-cosmic/10 border border-primary/30 rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        required
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
                   </div>
                   

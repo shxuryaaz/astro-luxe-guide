@@ -19,6 +19,7 @@ export interface Kundli {
   dateOfBirth: string;
   timeOfBirth: string;
   placeOfBirth: string;
+  gender?: string;
   coordinates: {
     latitude: number;
     longitude: number;
@@ -45,6 +46,7 @@ export const kundliService = {
     dateOfBirth: string;
     timeOfBirth: string;
     placeOfBirth: string;
+    gender?: string;
   }): Promise<Kundli> {
     try {
       // Get coordinates for the place
@@ -65,6 +67,7 @@ export const kundliService = {
         dateOfBirth: userDetails.dateOfBirth,
         timeOfBirth: userDetails.timeOfBirth,
         placeOfBirth: userDetails.placeOfBirth,
+        gender: userDetails.gender,
         coordinates,
         ascendant: kundliData.ascendant,
         planetaryPositions: kundliData.planetary_positions,

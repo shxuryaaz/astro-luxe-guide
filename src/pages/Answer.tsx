@@ -110,6 +110,7 @@ const Answer = () => {
             dateOfBirth: kundli.dateOfBirth,
             timeOfBirth: kundli.timeOfBirth,
             placeOfBirth: kundli.placeOfBirth,
+            gender: kundli.gender || "",
           }
         };
 

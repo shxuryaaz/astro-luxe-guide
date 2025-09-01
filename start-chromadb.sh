@@ -26,3 +26,4 @@ echo "🌐 ChromaDB will be available at: http://localhost:8000"
 chroma run --path ./chroma_db --host localhost --port 8000
 
 
+
