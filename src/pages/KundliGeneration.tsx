@@ -316,22 +316,22 @@ const KundliGeneration = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="gender" className="text-sm font-medium text-gray-200">
+                    <Label htmlFor="gender" className="text-sm font-semibold text-white">
                       Gender
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-300" />
+                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
                       <select
                         id="gender"
                         value={formData.gender}
                         onChange={handleInputChange("gender")}
-                        className="w-full pl-10 pr-3 py-2 bg-cosmic/10 border border-primary/30 rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        className="w-full pl-10 pr-3 py-2 bg-white/90 border border-primary/30 rounded-md text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                         required
                       >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option value="" className="text-gray-500">Select Gender</option>
+                        <option value="male" className="text-gray-800">Male</option>
+                        <option value="female" className="text-gray-800">Female</option>
+                        <option value="other" className="text-gray-800">Other</option>
                       </select>
                     </div>
                   </div>
