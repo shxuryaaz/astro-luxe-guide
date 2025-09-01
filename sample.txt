@@ -1,0 +1,4 @@
+Sample file for Vercel redeployment
+Created: $(date)
+Backend URL: https://astro-oracle-backend.onrender.com
+Frontend URL: https://astrometry-app.vercel.app
