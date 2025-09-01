@@ -40,3 +40,52 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Fix prose styling for BNN readings */
+.prose {
+  line-height: 1.8 !important;
+}
+
+.prose p {
+  margin-bottom: 1rem !important;
+  line-height: 1.8 !important;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+.prose ul,
+.prose ol {
+  margin-bottom: 1.5rem !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose li {
+  margin-bottom: 0.5rem !important;
+  line-height: 1.6 !important;
+}
+
+.prose blockquote {
+  margin: 1.5rem 0 !important;
+  padding: 1rem 1.5rem !important;
+  border-left: 4px solid #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+
+.prose strong {
+  font-weight: 600 !important;
+  color: #8b5cf6 !important;
+}
+
+.prose em {
+  font-style: italic !important;
+  color: #f59e0b !important;
+}

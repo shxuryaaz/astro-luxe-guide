@@ -349,17 +349,20 @@ Remember, astrology reveals potential - your conscious choices and actions deter
                   <div className="prose prose-invert max-w-none">
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]}
-                      className="text-foreground leading-relaxed space-y-4"
+                      className="text-foreground leading-relaxed"
                       components={{
-                        h1: ({children}) => <h1 className="text-2xl font-bold text-primary mb-4">{children}</h1>,
-                        h2: ({children}) => <h2 className="text-xl font-semibold text-primary mb-3">{children}</h2>,
-                        h3: ({children}) => <h3 className="text-lg font-semibold text-accent mb-2">{children}</h3>,
-                        p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                        h1: ({children}) => <h1 className="text-2xl font-bold text-primary mb-6 mt-8 first:mt-0">{children}</h1>,
+                        h2: ({children}) => <h2 className="text-xl font-semibold text-primary mb-4 mt-6">{children}</h2>,
+                        h3: ({children}) => <h3 className="text-lg font-semibold text-accent mb-3 mt-4">{children}</h3>,
+                        p: ({children}) => <p className="mb-4 leading-relaxed text-base">{children}</p>,
                         strong: ({children}) => <strong className="text-primary font-semibold">{children}</strong>,
                         em: ({children}) => <em className="text-accent italic">{children}</em>,
-                        ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-4 pl-4">{children}</ul>,
-                        li: ({children}) => <li className="mb-1">{children}</li>,
-                        blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">{children}</blockquote>,
+                        ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-6 pl-6">{children}</ul>,
+                        ol: ({children}) => <ol className="list-decimal list-inside space-y-2 mb-6 pl-6">{children}</ol>,
+                        li: ({children}) => <li className="mb-2 leading-relaxed">{children}</li>,
+                        blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-6 py-2">{children}</blockquote>,
+                        hr: () => <hr className="border-primary/20 my-8" />,
+                        br: () => <br className="mb-2" />,
                       }}
                     >
                       {answer}
