@@ -171,9 +171,18 @@ export async function processPDF(pdfPath) {
     const embeddings = await createEmbeddings(limitedChunks);
     console.log('Created embeddings for', embeddings.length, 'chunks');
     
+    // Store chunks globally for fallback access
+    global.bnnChunks = limitedChunks;
+    global.bnnEmbeddings = embeddings;
+    console.log('Stored chunks globally for fallback access');
+    
     // Store in vector database
-    await storeInVectorDB(limitedChunks, embeddings);
-    console.log('Stored chunks and embeddings in vector database');
+    try {
+      await storeInVectorDB(limitedChunks, embeddings);
+      console.log('Stored chunks and embeddings in vector database');
+    } catch (dbError) {
+      console.log('Vector database storage failed, but chunks are available globally');
+    }
     
     return {
       chunks: limitedChunks.length,
@@ -333,7 +342,50 @@ export async function searchBNNKnowledge(query, kundliData, question) {
     
     // Fallback when ChromaDB is not available
     if (error.message.includes('ChromaDB is not running') || error.message.includes('Failed to connect to chromadb')) {
-      console.log('⚠️  Using fallback BNN knowledge without vector search');
+      console.log('⚠️  ChromaDB search failed, using direct PDF content analysis');
+      
+      // Try to use the processed PDF chunks directly
+      try {
+        // Get the processed PDF chunks from the global state
+        if (global.bnnChunks && global.bnnChunks.length > 0) {
+          console.log('Using processed PDF chunks for analysis');
+          
+          // Simple text search in chunks for relevant content
+          const relevantChunks = global.bnnChunks.filter(chunk => {
+            const lowerChunk = chunk.toLowerCase();
+            const lowerQuery = query.toLowerCase();
+            
+            // Check if chunk contains query terms or related astrological concepts
+            return lowerChunk.includes(lowerQuery) ||
+                   lowerChunk.includes('marriage') ||
+                   lowerChunk.includes('relationship') ||
+                   lowerChunk.includes('career') ||
+                   lowerChunk.includes('health') ||
+                   lowerChunk.includes('money') ||
+                   lowerChunk.includes('education') ||
+                   lowerChunk.includes('jupiter') ||
+                   lowerChunk.includes('venus') ||
+                   lowerChunk.includes('mars') ||
+                   lowerChunk.includes('saturn') ||
+                   lowerChunk.includes('sun') ||
+                   lowerChunk.includes('moon');
+          }).slice(0, 5);
+          
+          if (relevantChunks.length > 0) {
+            return {
+              query: query,
+              results: relevantChunks,
+              metadatas: [],
+              distances: []
+            };
+          }
+        }
+      } catch (fallbackError) {
+        console.log('Fallback PDF analysis failed:', fallbackError.message);
+      }
+      
+      // Final fallback to basic BNN knowledge
+      console.log('Using basic BNN knowledge as final fallback');
       return {
         query: query,
         results: [
