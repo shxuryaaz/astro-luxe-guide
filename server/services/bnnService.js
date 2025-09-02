@@ -466,9 +466,9 @@ export async function searchBNNKnowledge(query, kundliData, question) {
             console.log(`❌ Chunk ${index + 1} rejected (no relevant content):`, chunk.substring(0, 100));
           }
           
-          // Return ALL chunks - let the LLM see the entire PDF
+          // Return ALL chunks - let the LLM see the ENTIRE PDF
           return true;
-        }).slice(0, 100); // Get 100 chunks for comprehensive coverage
+        }); // No slice - get ALL chunks
         
         if (relevantChunks.length > 0) {
           console.log(`Found ${relevantChunks.length} relevant chunks from PDF`);
