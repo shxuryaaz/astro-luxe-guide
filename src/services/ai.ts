@@ -32,26 +32,68 @@ export interface QuestionContext {
 }
 
 export const aiService = {
-  // Note: BNN PDF is now automatically loaded from ./bnn-document.pdf
-  // No manual upload required - the system processes the PDF on-demand
+  // Upload BNN PDF to the server
+  async uploadBNNPDF(file: File): Promise<{ 
+    success: boolean; 
+    message: string; 
+    filename?: string;
+    chunks?: number;
+    embeddings?: number;
+  }> {
+    try {
+      const formData = new FormData()
+      formData.append('pdf', file)
+
+      const response = await backendApi.post('/api/upload-bnn-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      return {
+        success: true,
+        message: response.data.message,
+        filename: response.data.filename,
+        chunks: response.data.chunks,
+        embeddings: response.data.embeddings
+      }
+    } catch (error) {
+      console.error('Error uploading BNN PDF:', error)
+      throw new Error('Failed to upload BNN PDF')
+    }
+  },
 
   // Generate BNN-based astrological reading using your PDF
   async generateBNNReading(context: QuestionContext): Promise<string> {
     try {
-      const response = await backendApi.post('/api/generate-bnn-reading', {
-        question: context.question,
-        kundliData: context.kundliData,
-        userDetails: context.userDetails
+      console.log('🔮 Calling backend endpoint for BNN reading...');
+      
+      // Extract question text from the context
+      const questionText = context.question.text || 'general guidance';
+      
+      const response = await backendApi.post('/api/bnn/generate-reading', {
+        question: questionText,
+        kundliData: context.kundliData
       })
+
+      console.log('📡 Backend response:', response.data);
 
       // Check if the response contains an error
       if (response.data.error) {
         throw new Error(response.data.error)
       }
 
-      return response.data.reading
+      // Handle both old and new response formats
+      if (response.data.reading) {
+        return response.data.reading;
+      } else if (typeof response.data === 'string') {
+        return response.data;
+      } else {
+        console.error('Unexpected response format:', response.data);
+        throw new Error('Invalid response format from backend');
+      }
     } catch (error) {
-      console.error('Error generating BNN reading:', error)
+      console.error('❌ Error generating BNN reading:', error)
       
       // Check if it's a server error (500) or network error
       if (error.response?.status === 500 || error.code === 'ECONNREFUSED') {
@@ -173,7 +215,7 @@ ${reading}
 *This reading is based on the ancient Bhrigu Nandi Nadi system and should be used as guidance. Your choices and actions determine your destiny.*
 
 **Generated on:** ${new Date().toLocaleDateString()}
-**System:** Astrometry - BNN Analysis
+**System:** Astro Oracle - BNN Analysis
     `.trim()
   }
 }

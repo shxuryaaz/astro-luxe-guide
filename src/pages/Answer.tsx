@@ -103,7 +103,8 @@ const Answer = () => {
             chandra_rasi: kundli.chandra_rasi,
             soorya_rasi: kundli.soorya_rasi,
             zodiac: kundli.zodiac,
-            additional_info: kundli.additional_info
+            additional_info: kundli.additional_info,
+            gender: kundli.gender || ""
           },
           userDetails: {
             name: kundli.name,
@@ -114,56 +115,60 @@ const Answer = () => {
           }
         };
 
+        console.log('🔮 Generating BNN reading with context:', context);
+        
         const aiAnswer = await aiService.generateBNNReading(context);
-        setAnswer(aiAnswer);
+        
+        // Check if we got a valid answer
+        if (aiAnswer && typeof aiAnswer === 'string' && aiAnswer.trim().length > 0) {
+          setAnswer(aiAnswer);
+          
+          // Store in history
+          await historyService.storeQuestionHistory({
+            userId: user.id,
+            kundliId: kundli.id,
+            questionCategory: selectedQuestion,
+            modelUsed: selectedModel,
+            answer: aiAnswer,
+          });
 
-        // Store in history
-        await historyService.storeQuestionHistory({
-          userId: user.id,
-          kundliId: kundli.id,
-          questionCategory: selectedQuestion,
-          modelUsed: selectedModel,
-          answer: aiAnswer,
-        });
-
-        toast({
-          title: "Reading Complete!",
-          description: "Your BNN reading has been generated successfully.",
-        });
+          toast({
+            title: "Reading Complete! ✨",
+            description: "Your BNN reading has been generated successfully.",
+          });
+        } else {
+          throw new Error('Invalid or empty response from AI service');
+        }
 
       } catch (error) {
-        console.error('Error generating answer:', error);
-        toast({
-          title: "Generation Failed",
-          description: "Failed to generate reading. Please try again.",
-          variant: "destructive",
-        });
+        console.error('❌ Error generating answer:', error);
         
-        // Fallback to mock answer for demo
-        setAnswer(`Based on your birth chart analysis through the ${modelNames[selectedModel as keyof typeof modelNames]} system, I can see significant planetary influences affecting your ${questionTitles[selectedQuestion as keyof typeof questionTitles].toLowerCase()}.
+        // Only show error toast if we don't have a fallback answer
+        if (!answer || answer.trim().length === 0) {
+          toast({
+            title: "Generation Failed",
+            description: "Failed to generate reading. Please try again.",
+            variant: "destructive",
+          });
+          
+          // Set a helpful fallback message
+          setAnswer(`We're experiencing some technical difficulties with the AI service. 
 
-Your current planetary period (Mahadasha) is highly favorable for the question you've asked. The combination of Jupiter's benefic aspect on your 10th house and Venus's placement in the 11th house creates an excellent foundation for growth and success.
+**What happened:**
+The system encountered an issue while generating your personalized reading.
 
-**Key Insights:**
+**What you can do:**
+1. **Try again** - Click the refresh button below
+2. **Check your connection** - Ensure you have a stable internet connection
+3. **Contact support** - If the issue persists, reach out to our team
 
-• **Timing:** The period between March 2024 to August 2024 appears particularly auspicious for major decisions and new beginnings in this area.
+**Your Kundli Data:**
+- **Model Used:** ${modelNames[selectedModel as keyof typeof modelNames]}
+- **Question Category:** ${questionTitles[selectedQuestion as keyof typeof questionTitles]}
+- **Generated:** ${new Date().toLocaleString()}
 
-• **Favorable Factors:** Your natal Moon's trine aspect with Jupiter creates strong intuitive guidance. Trust your instincts during this period.
-
-• **Challenges to Navigate:** Saturn's transit through your 7th house may create some delays or require extra patience. View these as opportunities for deeper preparation.
-
-• **Recommended Actions:** 
-  - Begin new initiatives on Thursdays (Jupiter's day)
-  - Wear yellow sapphire or citrine for enhanced Jupiter energy
-  - Perform charity on Thursdays to strengthen benefic planetary influences
-
-**Karmic Perspective:**
-Your soul has chosen this lifetime to master the lessons related to ${questionTitles[selectedQuestion as keyof typeof questionTitles].toLowerCase()}. The current planetary alignments are cosmic support for this growth.
-
-**Spiritual Guidance:**
-The universe is conspiring to help you succeed. Stay aligned with your highest values and trust the divine timing of events unfolding in your life.
-
-Remember, astrology reveals potential - your conscious choices and actions determine the final outcome. Use this guidance as a cosmic compass while you navigate your journey.`);
+We apologize for the inconvenience and are working to resolve this issue.`);
+        }
       } finally {
         setIsGenerating(false);
       }
