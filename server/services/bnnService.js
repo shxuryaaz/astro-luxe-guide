@@ -175,27 +175,42 @@ export async function processPDF(pdfPath) {
     console.log('PDF parsed successfully. Text length:', text.length);
     
     // Split text into chunks (semantic chunks for better retrieval)
+    console.log('📝 Starting text chunking process...');
+    console.log('📄 Raw text length:', text.length);
+    console.log('📄 Raw text preview (first 500 chars):', text.substring(0, 500));
+    console.log('📄 Raw text preview (last 500 chars):', text.substring(Math.max(0, text.length - 500)));
+    
     const chunks = splitTextIntoChunks(text);
-    console.log('Created', chunks.length, 'text chunks');
+    console.log('✅ Created', chunks.length, 'text chunks');
     
-    // Limit chunks to avoid long processing times
-    const maxChunks = 100; // Limit to 100 chunks for faster processing
-    const limitedChunks = chunks.slice(0, maxChunks);
-    console.log(`Using first ${limitedChunks.length} chunks (limited for faster processing)`);
+    // Log sample chunks to verify content
+    console.log('📖 Sample chunks analysis:');
+    chunks.slice(0, 5).forEach((chunk, index) => {
+      console.log(`Chunk ${index + 1}: Length=${chunk.length}, Content:`, chunk.substring(0, 200));
+      console.log('---');
+    });
     
-    // Create embeddings for each chunk
-    const embeddings = await createEmbeddings(limitedChunks);
+    // Use ALL chunks for comprehensive knowledge base
+    console.log(`Using ALL ${chunks.length} chunks for comprehensive BNN knowledge base`);
+    
+    // Create embeddings for all chunks
+    const embeddings = await createEmbeddings(chunks);
     console.log('Created embeddings for', embeddings.length, 'chunks');
     
     // Store chunks globally for fallback access
-    global.bnnChunks = limitedChunks;
+    global.bnnChunks = chunks;
     global.bnnEmbeddings = embeddings;
-    console.log('Stored chunks globally for fallback access');
+    console.log('💾 Stored chunks globally for fallback access');
+    console.log('📊 Global storage summary:');
+    console.log('   - Total chunks stored:', global.bnnChunks.length);
+    console.log('   - Total embeddings stored:', global.bnnEmbeddings.length);
+    console.log('   - Sample global chunk 1:', global.bnnChunks[0]?.substring(0, 200));
+    console.log('   - Sample global chunk 2:', global.bnnChunks[1]?.substring(0, 200));
     
     // Store in vector database
     let vectorStorageStatus = 'success';
     try {
-      await storeInVectorDB(limitedChunks, embeddings);
+      await storeInVectorDB(chunks, embeddings);
       console.log('✅ Stored chunks and embeddings in vector database');
     } catch (dbError) {
       console.log('⚠️  Vector database storage failed, but chunks are available globally');
@@ -203,7 +218,7 @@ export async function processPDF(pdfPath) {
     }
     
     return {
-      chunks: limitedChunks.length,
+      chunks: chunks.length,
       embeddings: embeddings.length,
       totalTextLength: text.length,
       globalStorage: 'success',
@@ -339,6 +354,10 @@ export async function searchBNNKnowledge(query, kundliData, question) {
     // First, check if we have global chunks available (from PDF processing)
     if (global.bnnChunks && global.bnnChunks.length > 0) {
       console.log('✅ Using processed PDF chunks for analysis (ChromaDB not needed)');
+      console.log('🔍 Global chunks status:');
+      console.log('   - Available chunks:', global.bnnChunks.length);
+      console.log('   - First chunk preview:', global.bnnChunks[0]?.substring(0, 200));
+      console.log('   - Last chunk preview:', global.bnnChunks[global.bnnChunks.length - 1]?.substring(0, 200));
       
       // Create query embedding for better search
       try {
@@ -348,36 +367,74 @@ export async function searchBNNKnowledge(query, kundliData, question) {
           encoding_format: "float"
         });
         
-        // Simple semantic search in chunks
-        const relevantChunks = global.bnnChunks.filter(chunk => {
+        // Smart semantic search in chunks - focus on actual BNN content
+        console.log('🔍 Starting chunk filtering process...');
+        console.log('📊 Total chunks available:', global.bnnChunks.length);
+        console.log('🎯 Query:', query);
+        
+        const relevantChunks = global.bnnChunks.filter((chunk, index) => {
           const lowerChunk = chunk.toLowerCase();
           const lowerQuery = query.toLowerCase();
           
-          // Check if chunk contains query terms or related astrological concepts
-          return lowerChunk.includes(lowerQuery) ||
-                 lowerChunk.includes('career') ||
-                 lowerChunk.includes('profession') ||
-                 lowerChunk.includes('marriage') ||
-                 lowerChunk.includes('relationship') ||
-                 lowerChunk.includes('health') ||
-                 lowerChunk.includes('money') ||
-                 lowerChunk.includes('education') ||
-                 lowerChunk.includes('jupiter') ||
-                 lowerChunk.includes('venus') ||
-                 lowerChunk.includes('mars') ||
-                 lowerChunk.includes('saturn') ||
-                 lowerChunk.includes('sun') ||
-                 lowerChunk.includes('moon') ||
-                 lowerChunk.includes('house') ||
-                 lowerChunk.includes('yoga') ||
-                 lowerChunk.includes('prediction');
-        }).slice(0, 5);
+          // Skip chunks that are mostly metadata, mantras, or generic content
+          const isMetadata = chunk.includes('Notion Press') || 
+                           chunk.includes('Publisher:') || 
+                           chunk.includes('Book Title:') ||
+                           chunk.includes('Genre:') ||
+                           chunk.includes('Edition:') ||
+                           chunk.includes('ॐ गण गणपतये') ||
+                           chunk.includes('BHRIGU NANDI NADI') ||
+                           chunk.includes('Astrology Simplified') ||
+                           chunk.includes('Saurabh Avasthi');
+          
+          if (isMetadata) {
+            console.log(`❌ Chunk ${index + 1} rejected (metadata):`, chunk.substring(0, 100));
+            return false;
+          }
+          
+          // Check if chunk contains query terms or substantial astrological content
+          const hasQueryTerms = lowerChunk.includes(lowerQuery);
+          const hasAstroContent = lowerChunk.includes('house') ||
+                                 lowerChunk.includes('planet') ||
+                                 lowerChunk.includes('rashi') ||
+                                 lowerChunk.includes('nakshatra') ||
+                                 lowerChunk.includes('yoga') ||
+                                 lowerChunk.includes('combination') ||
+                                 lowerChunk.includes('prediction') ||
+                                 lowerChunk.includes('career') ||
+                                 lowerChunk.includes('marriage') ||
+                                 lowerChunk.includes('health') ||
+                                 lowerChunk.includes('finance') ||
+                                 lowerChunk.includes('jupiter') ||
+                                 lowerChunk.includes('venus') ||
+                                 lowerChunk.includes('mars') ||
+                                 lowerChunk.includes('saturn') ||
+                                 lowerChunk.includes('sun') ||
+                                 lowerChunk.includes('moon') ||
+                                 lowerChunk.includes('mercury') ||
+                                 lowerChunk.includes('rahu') ||
+                                 lowerChunk.includes('ketu');
+          
+          // Log chunk analysis
+          if (hasQueryTerms) {
+            console.log(`✅ Chunk ${index + 1} accepted (query terms):`, chunk.substring(0, 150));
+          } else if (hasAstroContent && chunk.length > 100) {
+            console.log(`✅ Chunk ${index + 1} accepted (astro content):`, chunk.substring(0, 150));
+          } else {
+            console.log(`❌ Chunk ${index + 1} rejected (no relevant content):`, chunk.substring(0, 100));
+          }
+          
+          // Only return chunks with substantial astrological content
+          return hasQueryTerms || (hasAstroContent && chunk.length > 100);
+        }).slice(0, 15); // Get more chunks for comprehensive coverage
         
         if (relevantChunks.length > 0) {
           console.log(`Found ${relevantChunks.length} relevant chunks from PDF`);
-          console.log('📖 Sample chunk content:');
-          relevantChunks.slice(0, 2).forEach((chunk, index) => {
-            console.log(`Chunk ${index + 1} (first 200 chars):`, chunk.substring(0, 200));
+          console.log('📖 Selected chunks content:');
+          relevantChunks.forEach((chunk, index) => {
+            const cleanChunk = chunk.replace(/\s+/g, ' ').trim();
+            console.log(`Chunk ${index + 1} (${cleanChunk.length} chars):`, cleanChunk.substring(0, 300));
+            console.log('---');
           });
           return {
             query: query,
@@ -478,6 +535,13 @@ export async function generateBNNReading(question, kundliData, userDetails) {
     console.log('Content length:', bnnContext.length);
     console.log('First 500 characters:', bnnContext.substring(0, 500));
     console.log('Last 500 characters:', bnnContext.substring(Math.max(0, bnnContext.length - 500)));
+    console.log('📊 Context analysis:');
+    console.log('   - Total chunks used:', searchResults.results.length);
+    console.log('   - Average chunk length:', Math.round(bnnContext.length / searchResults.results.length));
+    console.log('   - Contains career terms:', bnnContext.toLowerCase().includes('career'));
+    console.log('   - Contains house terms:', bnnContext.toLowerCase().includes('house'));
+    console.log('   - Contains planet terms:', bnnContext.toLowerCase().includes('planet'));
+    console.log('   - Contains yoga terms:', bnnContext.toLowerCase().includes('yoga'));
     
     // Create the system prompt with BNN context
     const systemPrompt = createBNNSystemPrompt(bnnContext);
