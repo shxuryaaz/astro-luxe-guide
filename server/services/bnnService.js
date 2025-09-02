@@ -466,9 +466,9 @@ export async function searchBNNKnowledge(query, kundliData, question) {
             console.log(`❌ Chunk ${index + 1} rejected (no relevant content):`, chunk.substring(0, 100));
           }
           
-          // Prioritize chunks with actual BNN rules and predictions
-          return hasQueryTerms || hasActualBNNRules || (hasAstroContent && chunk.length > 200);
-        }).slice(0, 15); // Get more chunks for comprehensive coverage
+          // Return ALL chunks - let the LLM see the entire PDF
+          return true;
+        }).slice(0, 100); // Get 100 chunks for comprehensive coverage
         
         if (relevantChunks.length > 0) {
           console.log(`Found ${relevantChunks.length} relevant chunks from PDF`);
