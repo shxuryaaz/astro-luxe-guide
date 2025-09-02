@@ -305,14 +305,14 @@ export async function generateBNNReading(question, kundliData) {
     
     console.log(`🤖 Sending request to OpenAI with context length: ${bnnContext.context.length}`);
     
-    // Generate AI response
+    // Generate AI response using GPT-3.5-turbo for cost optimization
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo", // Changed from GPT-4 to GPT-3.5-turbo for 30x cost reduction
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      max_tokens: 2000,
+      max_tokens: 1500, // Reduced from 2000 for cost optimization
       temperature: 0.7,
     });
     
@@ -320,12 +320,15 @@ export async function generateBNNReading(question, kundliData) {
     
     console.log(`✅ BNN reading generated successfully`);
     console.log(`📝 Reading length: ${reading.length} characters`);
+    console.log(`💰 Cost optimized: Using GPT-3.5-turbo instead of GPT-4`);
     
     return {
       reading: reading,
       contextUsed: bnnContext.source,
       chunksUsed: bnnContext.chunks,
       contextLength: bnnContext.context.length,
+      model: "gpt-3.5-turbo",
+      costOptimized: true,
       timestamp: new Date().toISOString()
     };
     

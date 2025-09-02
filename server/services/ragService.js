@@ -13,6 +13,7 @@ class LightweightRAGService {
     this.chunks = [];
     this.embeddings = [];
     this.isInitialized = false;
+    this.cache = new Map(); // Simple in-memory cache
   }
 
   async initialize() {
@@ -58,7 +59,7 @@ class LightweightRAGService {
     }
   }
 
-  async findSimilarChunks(query, chunks, embeddings, topK = 10) {
+  async findSimilarChunks(query, chunks, embeddings, topK = 8) { // Reduced from 15 to 8
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -197,43 +198,68 @@ class LightweightRAGService {
     return chunks;
   }
 
-  async searchKnowledge(query, topK = 15) {
+  async searchKnowledge(query, topK = 8) { // Reduced from 15 to 8 for cost optimization
     if (this.chunks.length === 0) {
       throw new Error('No PDF chunks available. Please process a PDF first.');
     }
     
     try {
+      // Check cache first
+      const cacheKey = query.toLowerCase().trim();
+      if (this.cache.has(cacheKey)) {
+        console.log('✅ Using cached results for query');
+        return this.cache.get(cacheKey);
+      }
+      
       console.log(`🔍 Searching knowledge base for: "${query}"`);
       
       // Find similar chunks
       const similarChunks = await this.findSimilarChunks(query, this.chunks, this.embeddings, topK);
       
-      // Filter out low-quality chunks
+      // Enhanced filtering for better relevance and cost reduction
       const relevantChunks = similarChunks.filter(item => {
         const chunk = item.chunk;
-        const hasQueryTerms = query.toLowerCase().split(' ').some(term => 
-          chunk.toLowerCase().includes(term)
+        const lowerChunk = chunk.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        
+        // Must have query terms for relevance
+        const hasQueryTerms = lowerQuery.split(' ').some(term => 
+          lowerChunk.includes(term) && term.length > 2
         );
         
-        // Reject metadata and generic content
+        // Reject low-quality content more aggressively
         const isMetadata = chunk.includes('©') || chunk.includes('ISBN') || 
-                          chunk.includes('Publisher:') || chunk.includes('Edition:');
-        const isGenericQuote = chunk.includes('" - ') || chunk.includes('"Human behavior');
-        const isTableOfContents = chunk.includes('VIRGO.') || chunk.includes('INDEX') || 
-                                 chunk.includes('Chapter') || chunk.includes('Understanding');
+                          chunk.includes('Publisher:') || chunk.includes('Edition:') ||
+                          chunk.includes('Notion Press') || chunk.includes('USA | INDIA');
         
-        return !isMetadata && !isGenericQuote && !isTableOfContents && 
-               (hasQueryTerms || item.similarity > 0.3);
+        const isGenericQuote = chunk.includes('" - ') || chunk.includes('"Human behavior') ||
+                              chunk.includes('Albert Einstein') || chunk.includes('Plato');
+        
+        const isTableOfContents = chunk.includes('VIRGO.') || chunk.includes('INDEX') || 
+                                 chunk.includes('Chapter') || chunk.includes('Understanding') ||
+                                 chunk.includes('COURSES IN') || chunk.includes('MASTER ALCHEMIST');
+        
+        const isTooShort = chunk.length < 100; // Reject very short chunks
+        
+        // Must pass ALL quality checks
+        return !isMetadata && !isGenericQuote && !isTableOfContents && !isTooShort && 
+               (hasQueryTerms || item.similarity > 0.4); // Higher similarity threshold
       });
       
-      console.log(`✅ Found ${relevantChunks.length} relevant chunks after filtering`);
+      console.log(`✅ Found ${relevantChunks.length} relevant chunks after enhanced filtering`);
       
-      // Return the most relevant chunks
-      return relevantChunks.map(item => ({
+      // Limit to top 5 most relevant chunks for cost optimization
+      const finalChunks = relevantChunks.slice(0, 5).map(item => ({
         content: item.chunk,
         similarity: item.similarity,
         relevance: this.calculateRelevance(item.chunk, query)
       }));
+      
+      // Cache the results
+      this.cache.set(cacheKey, finalChunks);
+      
+      return finalChunks;
+      
     } catch (error) {
       console.error('❌ Error searching knowledge:', error);
       throw error;
@@ -241,7 +267,7 @@ class LightweightRAGService {
   }
 
   calculateRelevance(chunk, query) {
-    const queryTerms = query.toLowerCase().split(' ');
+    const queryTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
     let relevance = 0;
     
     for (const term of queryTerms) {
@@ -258,8 +284,15 @@ class LightweightRAGService {
       isInitialized: this.isInitialized,
       chunksLoaded: this.chunks.length,
       embeddingsLoaded: this.embeddings.length,
-      service: 'Lightweight RAG (No ChromaDB)'
+      cacheSize: this.cache.size,
+      service: 'Lightweight RAG (No ChromaDB) - Cost Optimized'
     };
+  }
+
+  // Clear cache to free memory
+  clearCache() {
+    this.cache.clear();
+    console.log('🗑️ Cache cleared');
   }
 }
 
