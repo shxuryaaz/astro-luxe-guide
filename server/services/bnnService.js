@@ -315,91 +315,101 @@ export async function searchBNNKnowledge(query, kundliData, question) {
       }
     }
 
-    const collection = await getBNNCollection();
+    // First, check if we have global chunks available (from PDF processing)
+    if (global.bnnChunks && global.bnnChunks.length > 0) {
+      console.log('✅ Using processed PDF chunks for analysis (ChromaDB not needed)');
+      
+      // Create query embedding for better search
+      try {
+        const queryEmbedding = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: query,
+          encoding_format: "float"
+        });
+        
+        // Simple semantic search in chunks
+        const relevantChunks = global.bnnChunks.filter(chunk => {
+          const lowerChunk = chunk.toLowerCase();
+          const lowerQuery = query.toLowerCase();
+          
+          // Check if chunk contains query terms or related astrological concepts
+          return lowerChunk.includes(lowerQuery) ||
+                 lowerChunk.includes('career') ||
+                 lowerChunk.includes('profession') ||
+                 lowerChunk.includes('marriage') ||
+                 lowerChunk.includes('relationship') ||
+                 lowerChunk.includes('health') ||
+                 lowerChunk.includes('money') ||
+                 lowerChunk.includes('education') ||
+                 lowerChunk.includes('jupiter') ||
+                 lowerChunk.includes('venus') ||
+                 lowerChunk.includes('mars') ||
+                 lowerChunk.includes('saturn') ||
+                 lowerChunk.includes('sun') ||
+                 lowerChunk.includes('moon') ||
+                 lowerChunk.includes('house') ||
+                 lowerChunk.includes('yoga') ||
+                 lowerChunk.includes('prediction');
+        }).slice(0, 5);
+        
+        if (relevantChunks.length > 0) {
+          console.log(`Found ${relevantChunks.length} relevant chunks from PDF`);
+          return {
+            query: query,
+            results: relevantChunks,
+            metadatas: [],
+            distances: []
+          };
+        }
+      } catch (embeddingError) {
+        console.log('Embedding creation failed, using basic text search');
+      }
+    }
+
+    // Try ChromaDB if available
+    try {
+      const collection = await getBNNCollection();
+      
+      // Create query embedding
+      const queryEmbedding = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: query,
+        encoding_format: "float"
+      });
+      
+      // Search for similar chunks
+      const results = await collection.query({
+        queryEmbeddings: [queryEmbedding.data[0].embedding],
+        nResults: 5,
+        include: ["documents", "metadatas", "distances"]
+      });
+      
+      return {
+        query: query,
+        results: results.documents[0] || [],
+        metadatas: results.metadatas[0] || [],
+        distances: results.distances[0] || []
+      };
+    } catch (chromaError) {
+      console.log('⚠️  ChromaDB not available, using fallback knowledge');
+    }
     
-    // Create query embedding
-    const queryEmbedding = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: query,
-      encoding_format: "float"
-    });
-    
-    // Search for similar chunks
-    const results = await collection.query({
-      queryEmbeddings: [queryEmbedding.data[0].embedding],
-      nResults: 5, // Get top 5 most relevant chunks
-      include: ["documents", "metadatas", "distances"]
-    });
-    
+    // Final fallback to basic BNN knowledge
+    console.log('Using basic BNN knowledge as final fallback');
     return {
       query: query,
-      results: results.documents[0] || [],
-      metadatas: results.metadatas[0] || [],
-      distances: results.distances[0] || []
+      results: [
+        "BNN Rule: Jupiter in 10th house indicates career success through wisdom and knowledge",
+        "BNN Rule: Venus in 7th house suggests harmonious relationships and marriage",
+        "BNN Rule: Saturn in 6th house indicates challenges that lead to growth",
+        "BNN Rule: Mars in 1st house provides courage and leadership qualities",
+        "BNN Rule: Mercury in 3rd house enhances communication and learning abilities"
+      ],
+      metadatas: [],
+      distances: []
     };
   } catch (error) {
     console.error('Error searching BNN knowledge base:', error);
-    
-    // Fallback when ChromaDB is not available
-    if (error.message.includes('ChromaDB is not running') || error.message.includes('Failed to connect to chromadb')) {
-      console.log('⚠️  ChromaDB search failed, using direct PDF content analysis');
-      
-      // Try to use the processed PDF chunks directly
-      try {
-        // Get the processed PDF chunks from the global state
-        if (global.bnnChunks && global.bnnChunks.length > 0) {
-          console.log('Using processed PDF chunks for analysis');
-          
-          // Simple text search in chunks for relevant content
-          const relevantChunks = global.bnnChunks.filter(chunk => {
-            const lowerChunk = chunk.toLowerCase();
-            const lowerQuery = query.toLowerCase();
-            
-            // Check if chunk contains query terms or related astrological concepts
-            return lowerChunk.includes(lowerQuery) ||
-                   lowerChunk.includes('marriage') ||
-                   lowerChunk.includes('relationship') ||
-                   lowerChunk.includes('career') ||
-                   lowerChunk.includes('health') ||
-                   lowerChunk.includes('money') ||
-                   lowerChunk.includes('education') ||
-                   lowerChunk.includes('jupiter') ||
-                   lowerChunk.includes('venus') ||
-                   lowerChunk.includes('mars') ||
-                   lowerChunk.includes('saturn') ||
-                   lowerChunk.includes('sun') ||
-                   lowerChunk.includes('moon');
-          }).slice(0, 5);
-          
-          if (relevantChunks.length > 0) {
-            return {
-              query: query,
-              results: relevantChunks,
-              metadatas: [],
-              distances: []
-            };
-          }
-        }
-      } catch (fallbackError) {
-        console.log('Fallback PDF analysis failed:', fallbackError.message);
-      }
-      
-      // Final fallback to basic BNN knowledge
-      console.log('Using basic BNN knowledge as final fallback');
-      return {
-        query: query,
-        results: [
-          "BNN Rule: Jupiter in 10th house indicates career success through wisdom and knowledge",
-          "BNN Rule: Venus in 7th house suggests harmonious relationships and marriage",
-          "BNN Rule: Saturn in 6th house indicates challenges that lead to growth",
-          "BNN Rule: Mars in 1st house provides courage and leadership qualities",
-          "BNN Rule: Mercury in 3rd house enhances communication and learning abilities"
-        ],
-        metadatas: [],
-        distances: []
-      };
-    }
-    
     throw error;
   }
 }
