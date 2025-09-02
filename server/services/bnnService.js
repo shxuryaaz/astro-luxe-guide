@@ -385,7 +385,21 @@ export async function searchBNNKnowledge(query, kundliData, question) {
                            chunk.includes('ॐ गण गणपतये') ||
                            chunk.includes('BHRIGU NANDI NADI') ||
                            chunk.includes('Astrology Simplified') ||
-                           chunk.includes('Saurabh Avasthi');
+                           chunk.includes('Saurabh Avasthi') ||
+                           chunk.includes('VIRGO.') ||
+                           chunk.includes('LIBRA.') ||
+                           chunk.includes('SCORPIO.') ||
+                           chunk.includes('SAGITTARIUS.') ||
+                           chunk.includes('CAPRICORN.') ||
+                           chunk.includes('AQUARIUS.') ||
+                           chunk.includes('PISCES.') ||
+                           chunk.includes('INDEX') ||
+                           chunk.includes('Understanding') ||
+                           chunk.includes('Chapter') ||
+                           chunk.includes('Combination') ||
+                           chunk.includes('Transit') ||
+                           chunk.includes('Theory of') ||
+                           chunk.includes('Philosophy');
           
           if (isMetadata) {
             console.log(`❌ Chunk ${index + 1} rejected (metadata):`, chunk.substring(0, 100));
@@ -394,6 +408,32 @@ export async function searchBNNKnowledge(query, kundliData, question) {
           
           // Check if chunk contains query terms or substantial astrological content
           const hasQueryTerms = lowerChunk.includes(lowerQuery);
+          
+          // Look for actual BNN rules and predictions, not just mentions
+          const hasActualBNNRules = chunk.includes('●') ||
+                                   chunk.includes('○') ||
+                                   chunk.includes('Example:') ||
+                                   chunk.includes('Result:') ||
+                                   chunk.includes('Native:') ||
+                                   chunk.includes('Father:') ||
+                                   chunk.includes('Mother:') ||
+                                   chunk.includes('Brother:') ||
+                                   chunk.includes('Sister:') ||
+                                   chunk.includes('Wife:') ||
+                                   chunk.includes('Husband:') ||
+                                   chunk.includes('Profession:') ||
+                                   chunk.includes('Education:') ||
+                                   chunk.includes('Marriage:') ||
+                                   chunk.includes('Timing:') ||
+                                   chunk.includes('Probability:') ||
+                                   chunk.includes('Yoga:') ||
+                                   chunk.includes('Combination:') ||
+                                   chunk.includes('Transit:') ||
+                                   chunk.includes('Dasha:') ||
+                                   chunk.includes('Bhava:') ||
+                                   chunk.includes('Karaka:') ||
+                                   chunk.includes('Signification:');
+          
           const hasAstroContent = lowerChunk.includes('house') ||
                                  lowerChunk.includes('planet') ||
                                  lowerChunk.includes('rashi') ||
@@ -418,14 +458,16 @@ export async function searchBNNKnowledge(query, kundliData, question) {
           // Log chunk analysis
           if (hasQueryTerms) {
             console.log(`✅ Chunk ${index + 1} accepted (query terms):`, chunk.substring(0, 150));
-          } else if (hasAstroContent && chunk.length > 100) {
+          } else if (hasActualBNNRules) {
+            console.log(`✅ Chunk ${index + 1} accepted (actual BNN rules):`, chunk.substring(0, 150));
+          } else if (hasAstroContent && chunk.length > 200) {
             console.log(`✅ Chunk ${index + 1} accepted (astro content):`, chunk.substring(0, 150));
           } else {
             console.log(`❌ Chunk ${index + 1} rejected (no relevant content):`, chunk.substring(0, 100));
           }
           
-          // Only return chunks with substantial astrological content
-          return hasQueryTerms || (hasAstroContent && chunk.length > 100);
+          // Prioritize chunks with actual BNN rules and predictions
+          return hasQueryTerms || hasActualBNNRules || (hasAstroContent && chunk.length > 200);
         }).slice(0, 15); // Get more chunks for comprehensive coverage
         
         if (relevantChunks.length > 0) {
