@@ -84,15 +84,27 @@ async function getBNNCollection() {
 // Check if BNN PDF is already processed
 export async function isBNNPDFProcessed() {
   try {
-    const collection = await getBNNCollection();
-    const count = await collection.count();
-    return count > 0;
+    // First check if we have global chunks available (from previous processing)
+    if (global.bnnChunks && global.bnnChunks.length > 0) {
+      console.log('✅ BNN PDF already processed and available globally');
+      return true;
+    }
+
+    // Try ChromaDB if available
+    try {
+      const collection = await getBNNCollection();
+      const count = await collection.count();
+      if (count > 0) {
+        console.log('✅ BNN PDF already processed in ChromaDB');
+        return true;
+      }
+    } catch (chromaError) {
+      console.log('⚠️  ChromaDB not available, checking global chunks only');
+    }
+
+    return false;
   } catch (error) {
     console.error('Error checking if BNN PDF is processed:', error);
-    if (error.message.includes('ChromaDB is not running')) {
-      console.log('⚠️  ChromaDB not available, will process PDF without vector storage');
-      return false;
-    }
     return false;
   }
 }
@@ -103,7 +115,11 @@ export async function loadBNNPDF() {
     // Check if already processed
     if (await isBNNPDFProcessed()) {
       console.log('BNN PDF already processed, using existing data');
-      return { status: 'already_processed' };
+      return { 
+        status: 'already_processed',
+        chunks: global.bnnChunks ? global.bnnChunks.length : 0,
+        embeddings: global.bnnEmbeddings ? global.bnnEmbeddings.length : 0
+      };
     }
 
     // Define the fixed PDF path (in project root)
@@ -635,7 +651,8 @@ function createBNNUserPrompt(question, kundliData, userDetails) {
 - Gender: ${userDetails.gender || 'Not specified'}
 
 **Question:** ${question.text}
-**Question Description:** ${question.description}
+**Question Descriptio
+n:** ${question.description}
 **Question Keywords:** ${question.keywords.join(', ')}
 
 ${kundliDetails}
