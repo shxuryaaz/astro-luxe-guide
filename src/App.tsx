@@ -135,6 +135,8 @@ const AppRoutes = () => {
   );
 };
 
+// App.tsx - Updated to trigger Vercel redeploy with fixed endpoints
+// Fixed: Frontend now calls correct backend endpoints (/api/bnn/*)
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
