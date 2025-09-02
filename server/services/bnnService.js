@@ -193,11 +193,13 @@ export async function processPDF(pdfPath) {
     console.log('Stored chunks globally for fallback access');
     
     // Store in vector database
+    let vectorStorageStatus = 'success';
     try {
       await storeInVectorDB(limitedChunks, embeddings);
       console.log('✅ Stored chunks and embeddings in vector database');
     } catch (dbError) {
       console.log('⚠️  Vector database storage failed, but chunks are available globally');
+      vectorStorageStatus = 'failed';
     }
     
     return {
@@ -205,7 +207,7 @@ export async function processPDF(pdfPath) {
       embeddings: embeddings.length,
       totalTextLength: text.length,
       globalStorage: 'success',
-      vectorStorage: dbError ? 'failed' : 'success'
+      vectorStorage: vectorStorageStatus
     };
   } catch (error) {
     console.error('Error processing PDF:', error);
