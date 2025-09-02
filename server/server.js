@@ -21,9 +21,26 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'https://astrometry-app.vercel.app',
+    'https://astrometry-app.vercel.app/',
+    'http://localhost:3000',
+    'http://localhost:8080'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add CORS debugging
+app.use((req, res, next) => {
+  console.log(`🌐 CORS Request: ${req.method} ${req.path} from ${req.get('Origin')}`);
+  next();
+});
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
