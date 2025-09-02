@@ -195,15 +195,17 @@ export async function processPDF(pdfPath) {
     // Store in vector database
     try {
       await storeInVectorDB(limitedChunks, embeddings);
-      console.log('Stored chunks and embeddings in vector database');
+      console.log('✅ Stored chunks and embeddings in vector database');
     } catch (dbError) {
-      console.log('Vector database storage failed, but chunks are available globally');
+      console.log('⚠️  Vector database storage failed, but chunks are available globally');
     }
     
     return {
       chunks: limitedChunks.length,
       embeddings: embeddings.length,
-      totalTextLength: text.length
+      totalTextLength: text.length,
+      globalStorage: 'success',
+      vectorStorage: dbError ? 'failed' : 'success'
     };
   } catch (error) {
     console.error('Error processing PDF:', error);
@@ -313,8 +315,9 @@ async function storeInVectorDB(chunks, embeddings) {
     // Fallback when ChromaDB is not available
     if (error.message.includes('ChromaDB is not running') || error.message.includes('Failed to connect to chromadb')) {
       console.log('⚠️  ChromaDB not available, skipping vector storage');
-      console.log('📄 PDF processed successfully without vector database');
-      return;
+          console.log('📄 PDF processed successfully without vector database');
+    console.log('✅ Global chunks are available for BNN readings');
+    return;
     }
     
     throw error;
