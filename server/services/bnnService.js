@@ -375,6 +375,10 @@ export async function searchBNNKnowledge(query, kundliData, question) {
         
         if (relevantChunks.length > 0) {
           console.log(`Found ${relevantChunks.length} relevant chunks from PDF`);
+          console.log('📖 Sample chunk content:');
+          relevantChunks.slice(0, 2).forEach((chunk, index) => {
+            console.log(`Chunk ${index + 1} (first 200 chars):`, chunk.substring(0, 200));
+          });
           return {
             query: query,
             results: relevantChunks,
@@ -468,6 +472,12 @@ export async function generateBNNReading(question, kundliData, userDetails) {
     
     // Get the most relevant BNN content
     const bnnContext = searchResults.results.join('\n\n');
+    
+    // Log what content is being sent to the LLM
+    console.log('📚 BNN Context being sent to LLM:');
+    console.log('Content length:', bnnContext.length);
+    console.log('First 500 characters:', bnnContext.substring(0, 500));
+    console.log('Last 500 characters:', bnnContext.substring(Math.max(0, bnnContext.length - 500)));
     
     // Create the system prompt with BNN context
     const systemPrompt = createBNNSystemPrompt(bnnContext);
