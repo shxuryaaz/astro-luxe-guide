@@ -137,6 +137,8 @@ const AppRoutes = () => {
 
 // App.tsx - Updated to trigger Vercel redeploy with fixed endpoints
 // Fixed: Frontend now calls correct backend endpoints (/api/bnn/*)
+// Version: 1.0.1 - CORS fixes and endpoint updates
+// Build: 2025-09-02T22:50:00Z - Force cache refresh
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
