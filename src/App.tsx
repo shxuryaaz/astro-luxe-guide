@@ -139,6 +139,7 @@ const AppRoutes = () => {
 // Fixed: Frontend now calls correct backend endpoints (/api/bnn/*)
 // Version: 1.0.1 - CORS fixes and endpoint updates
 // Build: 2025-09-02T22:50:00Z - Force cache refresh
+// Trigger Vercel redeploy - Backend prompts updated for strict BNN format
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
