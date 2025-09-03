@@ -85,11 +85,14 @@ export const aiService = {
 
       // Handle both old and new response formats
       if (response.data.reading) {
+        console.log('✅ Found reading in response.data.reading');
         return response.data.reading;
       } else if (typeof response.data === 'string') {
+        console.log('✅ Found reading as direct string response');
         return response.data;
       } else {
-        console.error('Unexpected response format:', response.data);
+        console.error('❌ Unexpected response format:', response.data);
+        console.error('❌ Response keys:', Object.keys(response.data));
         throw new Error('Invalid response format from backend');
       }
     } catch (error) {
