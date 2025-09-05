@@ -7,10 +7,20 @@ import LightweightRAGService from './ragService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI lazily
+let openai = null;
+
+function getOpenAI() {
+  if (!openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY environment variable is not set');
+    }
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 // Initialize RAG service
 const ragService = new LightweightRAGService();
@@ -404,7 +414,7 @@ export async function generateBNNReading(question, kundliData) {
     console.log(`🤖 Sending request to OpenAI for BNN reading`);
     
     // Generate AI response using GPT-3.5-turbo for cost optimization
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-3.5-turbo", // Changed from GPT-4 to GPT-3.5-turbo for 30x cost reduction
       messages: [
         { role: "system", content: systemPrompt },
