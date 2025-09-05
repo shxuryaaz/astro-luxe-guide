@@ -344,7 +344,7 @@ Probability Snapshot
 
 [Outcome 5]: [XX]%
 
-In simple words: [PERSON_NAME] is [destined/likely] to [specific outcome], with [category] flowing mainly through [key sources]. [He/She] will enjoy [specific benefits] and [specific challenges] throughout life.
+In simple words: [ACTUAL_PERSON_NAME] is [destined/likely] to [specific outcome], with [category] flowing mainly through [key sources]. [He/She] will enjoy [specific benefits] and [specific challenges] throughout life.
 
 Remember: You are a BNN specialist. Use ONLY the BNN knowledge provided in the context, not generic astrology. Always include specific probability percentages and structured analysis. NEVER make up planetary positions - use ONLY what's provided in kundliData. ALWAYS use the person's actual name from the User Details section, never use "User" or "the user".`;
 }
@@ -438,8 +438,10 @@ CRITICAL INSTRUCTIONS:
 6. Use the actual planetary positions from ProKerala API for accurate readings
 7. ALWAYS use the person's actual name "${name}" in your response - NEVER use "User" or "the user"
 8. In the Prediction Summary section, start with "${name} is..." not "User is..."
-9. Replace [PERSON_NAME] in the template with "${name}" - this is CRITICAL
+9. Replace [ACTUAL_PERSON_NAME] in the template with "${name}" - this is CRITICAL
 10. NEVER use "User" anywhere in your response - always use "${name}"
+11. In the final "In simple words" section, use "${name}" instead of [ACTUAL_PERSON_NAME]
+12. The person's name is "${name}" - use it throughout the entire response
 
 Please provide a comprehensive BNN reading based on the above ProKerala data and BNN astrology principles.`;
   
