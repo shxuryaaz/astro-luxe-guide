@@ -247,11 +247,16 @@ app.post('/api/prokerala/*', async (req, res) => {
         params.append('gender', details.gender);
       }
       
+      // Try to get more data by adding additional parameters
+      params.append('include_planetary_positions', 'true');
+      params.append('include_houses', 'true');
+      params.append('include_ascendant', 'true');
+      
       const queryString = params.toString();
       let combinedData = {};
       
       // Try multiple endpoints to get complete data
-      const endpointsToTry = ['kundli', 'birth-chart', 'planetary-positions', 'houses'];
+      const endpointsToTry = ['kundli', 'birth-chart', 'planetary-positions', 'houses', 'ascendant'];
       
       for (const endpoint of endpointsToTry) {
         const targetUrl = `https://api.prokerala.com/v2/astrology/${endpoint}?${queryString}`;
@@ -286,7 +291,7 @@ app.post('/api/prokerala/*', async (req, res) => {
       response = {
         ok: true,
         status: 200,
-        headers: {
+      headers: {
           entries: () => [['content-type', 'application/json']]
         },
         json: async () => ({ status: 'ok', data: combinedData })

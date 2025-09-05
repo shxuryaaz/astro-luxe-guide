@@ -374,82 +374,94 @@ const KundliGeneration = () => {
                 {console.log('Nakshatra data:', kundliData.nakshatra)}
                 {console.log('Additional info:', kundliData.additional_info)}
                 {/* Basic Info */}
-                <Card className="glass border-primary/30">
+                <Card className="glass border-primary/30 bg-gradient-to-br from-purple-900/20 to-blue-900/20">
                   <CardHeader>
-                    <CardTitle className="text-xl font-serif text-cosmic">
+                    <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                      <Sparkles className="w-6 h-6 text-yellow-400" />
                       Your Birth Chart
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-300">Name</p>
-                        <p className="font-medium">{kundliData.name}</p>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-gradient-to-r from-purple-800/30 to-blue-800/30 rounded-xl border border-purple-500/20">
+                        <p className="text-sm text-purple-300 mb-1">Name</p>
+                        <p className="font-semibold text-white text-lg">{kundliData.name}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">Zodiac Sign</p>
-                        <p className="font-medium">{getZodiacSign(kundliData.dateOfBirth)}</p>
+                      <div className="p-4 bg-gradient-to-r from-blue-800/30 to-cyan-800/30 rounded-xl border border-blue-500/20">
+                        <p className="text-sm text-blue-300 mb-1">Zodiac Sign</p>
+                        <p className="font-semibold text-white text-lg">{getZodiacSign(kundliData.dateOfBirth)}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">Ascendant</p>
-                        <p className="font-medium">{kundliData.ascendant.sign} {kundliData.ascendant.degree}°</p>
+                      <div className="p-4 bg-gradient-to-r from-green-800/30 to-emerald-800/30 rounded-xl border border-green-500/20">
+                        <p className="text-sm text-green-300 mb-1">Ascendant</p>
+                        <p className="font-semibold text-white text-lg">
+                          {kundliData.ascendant?.sign || 'Unknown'} {kundliData.ascendant?.degree || '0°'}
+                        </p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">Birth Place</p>
-                        <p className="font-medium">{kundliData.placeOfBirth}</p>
+                      <div className="p-4 bg-gradient-to-r from-orange-800/30 to-red-800/30 rounded-xl border border-orange-500/20">
+                        <p className="text-sm text-orange-300 mb-1">Birth Place</p>
+                        <p className="font-semibold text-white text-lg">{kundliData.placeOfBirth}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Planetary Positions */}
-                <Card className="glass border-primary/30">
+                <Card className="glass border-primary/30 bg-gradient-to-br from-indigo-900/20 to-purple-900/20">
                   <CardHeader>
-                    <CardTitle className="text-xl font-serif text-cosmic flex items-center gap-3">
-                      <Globe className="w-5 h-5" />
+                    <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                      <Globe className="w-6 h-6 text-blue-400" />
                       Planetary Positions
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {kundliData.planetaryPositions?.map((planet: any, index: number) => (
-                        <div key={index} className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">{planet.name}</p>
-                          <p className="text-sm text-gray-300">
-                            {planet.sign} {planet.degree}°
-                          </p>
-                          <p className="text-xs text-gray-300">
-                            House {planet.house}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    {kundliData.planetaryPositions && kundliData.planetaryPositions.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {kundliData.planetaryPositions.map((planet: any, index: number) => (
+                          <div key={index} className="p-4 bg-gradient-to-br from-blue-800/20 to-purple-800/20 rounded-xl border border-blue-500/20 hover:border-blue-400/40 transition-all duration-300">
+                            <p className="font-semibold text-blue-300 text-lg">{planet.name}</p>
+                            <p className="text-sm text-white">
+                              {planet.sign} {planet.degree}°
+                            </p>
+                            <p className="text-xs text-gray-300">
+                              House {planet.house}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Globe className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-300 text-lg">Planetary positions data not available</p>
+                        <p className="text-gray-400 text-sm">This information will be available in future updates</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
                 {/* Nakshatra Details */}
                 {kundliData.nakshatra && (
-                  <Card className="glass border-primary/30">
+                  <Card className="glass border-primary/30 bg-gradient-to-br from-emerald-900/20 to-teal-900/20">
                     <CardHeader>
-                      <CardTitle className="text-xl font-serif text-cosmic flex items-center gap-3">
-                        <Sparkles className="w-5 h-5" />
+                      <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                        <Sparkles className="w-6 h-6 text-emerald-400" />
                         Nakshatra Details
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Nakshatra</p>
-                          <p className="text-sm text-gray-300">{kundliData.nakshatra.name}</p>
-                          <p className="text-xs text-gray-300">Pada {kundliData.nakshatra.pada}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="p-4 bg-gradient-to-br from-emerald-800/30 to-green-800/30 rounded-xl border border-emerald-500/20">
+                          <p className="font-semibold text-emerald-300 mb-2">Nakshatra</p>
+                          <p className="text-white text-lg font-medium">{kundliData.nakshatra.name}</p>
+                          <p className="text-emerald-200 text-sm">Pada {kundliData.nakshatra.pada}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Lord</p>
-                          <p className="text-sm text-gray-300">{kundliData.nakshatra.lord?.name}</p>
+                        <div className="p-4 bg-gradient-to-br from-teal-800/30 to-cyan-800/30 rounded-xl border border-teal-500/20">
+                          <p className="font-semibold text-teal-300 mb-2">Lord</p>
+                          <p className="text-white text-lg font-medium">{kundliData.nakshatra.lord?.name}</p>
+                          <p className="text-teal-200 text-sm">{kundliData.nakshatra.lord?.vedic_name}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">ID</p>
-                          <p className="text-sm text-gray-300">{kundliData.nakshatra.id}</p>
+                        <div className="p-4 bg-gradient-to-br from-blue-800/30 to-indigo-800/30 rounded-xl border border-blue-500/20">
+                          <p className="font-semibold text-blue-300 mb-2">ID</p>
+                          <p className="text-white text-lg font-medium">{kundliData.nakshatra.id}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -457,29 +469,29 @@ const KundliGeneration = () => {
                 )}
 
                 {/* Rashi Details */}
-                <Card className="glass border-primary/30">
+                <Card className="glass border-primary/30 bg-gradient-to-br from-amber-900/20 to-orange-900/20">
                   <CardHeader>
-                    <CardTitle className="text-xl font-serif text-cosmic flex items-center gap-3">
-                      <Globe className="w-5 h-5" />
+                    <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                      <Globe className="w-6 h-6 text-amber-400" />
                       Rashi Details
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="p-3 bg-cosmic/10 rounded-lg">
-                        <p className="font-medium text-cosmic">Chandra Rashi</p>
-                        <p className="text-sm text-gray-300">{kundliData.chandra_rasi?.name}</p>
-                        <p className="text-xs text-gray-300">Lord: {kundliData.chandra_rasi?.lord?.name}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="p-4 bg-gradient-to-br from-amber-800/30 to-yellow-800/30 rounded-xl border border-amber-500/20">
+                        <p className="font-semibold text-amber-300 mb-2">Chandra Rashi</p>
+                        <p className="text-white text-lg font-medium">{kundliData.chandra_rasi?.name}</p>
+                        <p className="text-amber-200 text-sm">Lord: {kundliData.chandra_rasi?.lord?.name}</p>
                       </div>
-                      <div className="p-3 bg-cosmic/10 rounded-lg">
-                        <p className="font-medium text-cosmic">Soorya Rashi</p>
-                        <p className="text-sm text-gray-300">{kundliData.soorya_rasi?.name}</p>
-                        <p className="text-xs text-gray-300">Lord: {kundliData.soorya_rasi?.lord?.name}</p>
+                      <div className="p-4 bg-gradient-to-br from-orange-800/30 to-red-800/30 rounded-xl border border-orange-500/20">
+                        <p className="font-semibold text-orange-300 mb-2">Soorya Rashi</p>
+                        <p className="text-white text-lg font-medium">{kundliData.soorya_rasi?.name}</p>
+                        <p className="text-orange-200 text-sm">Lord: {kundliData.soorya_rasi?.lord?.name}</p>
                       </div>
-                      <div className="p-3 bg-cosmic/10 rounded-lg">
-                        <p className="font-medium text-cosmic">Zodiac</p>
-                        <p className="text-sm text-gray-300">{kundliData.zodiac?.name}</p>
-                        <p className="text-xs text-gray-300">ID: {kundliData.zodiac?.id}</p>
+                      <div className="p-4 bg-gradient-to-br from-pink-800/30 to-rose-800/30 rounded-xl border border-pink-500/20">
+                        <p className="font-semibold text-pink-300 mb-2">Zodiac</p>
+                        <p className="text-white text-lg font-medium">{kundliData.zodiac?.name}</p>
+                        <p className="text-pink-200 text-sm">ID: {kundliData.zodiac?.id}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -487,50 +499,50 @@ const KundliGeneration = () => {
 
                 {/* Additional Information */}
                 {kundliData.additional_info && (
-                  <Card className="glass border-primary/30">
+                  <Card className="glass border-primary/30 bg-gradient-to-br from-violet-900/20 to-purple-900/20">
                     <CardHeader>
-                      <CardTitle className="text-xl font-serif text-cosmic flex items-center gap-3">
-                        <MessageSquare className="w-5 h-5" />
+                      <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                        <MessageSquare className="w-6 h-6 text-violet-400" />
                         Additional Information
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Deity</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.deity}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="p-4 bg-gradient-to-br from-violet-800/30 to-purple-800/30 rounded-xl border border-violet-500/20">
+                          <p className="font-semibold text-violet-300 mb-2">Deity</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.deity}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Ganam</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.ganam}</p>
+                        <div className="p-4 bg-gradient-to-br from-purple-800/30 to-pink-800/30 rounded-xl border border-purple-500/20">
+                          <p className="font-semibold text-purple-300 mb-2">Ganam</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.ganam}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Symbol</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.symbol}</p>
+                        <div className="p-4 bg-gradient-to-br from-pink-800/30 to-rose-800/30 rounded-xl border border-pink-500/20">
+                          <p className="font-semibold text-pink-300 mb-2">Symbol</p>
+                          <p className="text-white text-sm">{kundliData.additional_info.symbol}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Animal Sign</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.animal_sign}</p>
+                        <div className="p-4 bg-gradient-to-br from-rose-800/30 to-red-800/30 rounded-xl border border-rose-500/20">
+                          <p className="font-semibold text-rose-300 mb-2">Animal Sign</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.animal_sign}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Nadi</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.nadi}</p>
+                        <div className="p-4 bg-gradient-to-br from-red-800/30 to-orange-800/30 rounded-xl border border-red-500/20">
+                          <p className="font-semibold text-red-300 mb-2">Nadi</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.nadi}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Color</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.color}</p>
+                        <div className="p-4 bg-gradient-to-br from-orange-800/30 to-yellow-800/30 rounded-xl border border-orange-500/20">
+                          <p className="font-semibold text-orange-300 mb-2">Color</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.color}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Best Direction</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.best_direction}</p>
+                        <div className="p-4 bg-gradient-to-br from-yellow-800/30 to-lime-800/30 rounded-xl border border-yellow-500/20">
+                          <p className="font-semibold text-yellow-300 mb-2">Best Direction</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.best_direction}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Birth Stone</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.birth_stone}</p>
+                        <div className="p-4 bg-gradient-to-br from-lime-800/30 to-green-800/30 rounded-xl border border-lime-500/20">
+                          <p className="font-semibold text-lime-300 mb-2">Birth Stone</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.birth_stone}</p>
                         </div>
-                        <div className="p-3 bg-cosmic/10 rounded-lg">
-                          <p className="font-medium text-cosmic">Planet</p>
-                          <p className="text-sm text-gray-300">{kundliData.additional_info.planet}</p>
+                        <div className="p-4 bg-gradient-to-br from-green-800/30 to-emerald-800/30 rounded-xl border border-green-500/20">
+                          <p className="font-semibold text-green-300 mb-2">Planet</p>
+                          <p className="text-white text-lg font-medium">{kundliData.additional_info.planet}</p>
                         </div>
                       </div>
                     </CardContent>
