@@ -326,6 +326,33 @@ app.post('/api/prokerala/*', async (req, res) => {
         console.warn('⚠️ Houses missing or invalid, providing fallback');
         data.houses = [];
       }
+      
+      // Ensure nakshatra field is not undefined
+      if (data.nakshatra === undefined) {
+        console.warn('⚠️ Nakshatra field is undefined, setting to null');
+        data.nakshatra = null;
+      }
+      
+      // Ensure other optional fields are not undefined
+      if (data.chandra_rasi === undefined) {
+        console.warn('⚠️ Chandra rasi field is undefined, setting to null');
+        data.chandra_rasi = null;
+      }
+      
+      if (data.soorya_rasi === undefined) {
+        console.warn('⚠️ Soorya rasi field is undefined, setting to null');
+        data.soorya_rasi = null;
+      }
+      
+      if (data.zodiac === undefined) {
+        console.warn('⚠️ Zodiac field is undefined, setting to null');
+        data.zodiac = null;
+      }
+      
+      if (data.additional_info === undefined) {
+        console.warn('⚠️ Additional info field is undefined, setting to null');
+        data.additional_info = null;
+      }
     }
     
     res.json(data);

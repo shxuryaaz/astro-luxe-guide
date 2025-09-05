@@ -70,9 +70,17 @@ export const kundliService = {
       const validatedPlanetaryPositions = kundliData.planetary_positions || [];
       const validatedHouses = kundliData.houses || [];
 
+      // Validate nakshatra field specifically
+      const validatedNakshatra = kundliData.nakshatra && 
+        typeof kundliData.nakshatra === 'object' && 
+        Object.keys(kundliData.nakshatra).length > 0
+        ? kundliData.nakshatra 
+        : null;
+
       console.log('Validated ascendant:', validatedAscendant);
       console.log('Validated planetary positions count:', validatedPlanetaryPositions.length);
       console.log('Validated houses count:', validatedHouses.length);
+      console.log('Validated nakshatra:', validatedNakshatra);
 
       // Create Kundli document
       const kundliId = `kundli_${Date.now()}`;
@@ -89,7 +97,7 @@ export const kundliService = {
         planetaryPositions: validatedPlanetaryPositions,
         houses: validatedHouses,
         // Include all ProKerala data with null fallbacks for undefined values
-        nakshatra: kundliData.nakshatra || null,
+        nakshatra: validatedNakshatra,
         chandra_rasi: kundliData.chandra_rasi || null,
         soorya_rasi: kundliData.soorya_rasi || null,
         zodiac: kundliData.zodiac || null,
