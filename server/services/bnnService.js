@@ -360,7 +360,11 @@ Remember: You are a BNN specialist. Use ONLY the BNN knowledge provided in the c
  */
 function createBNNUserPrompt(question, kundliData, bnnContext) {
   // Extract ProKerala data properly
+  console.log('🔍 DEBUG: kundliData received:', JSON.stringify(kundliData, null, 2));
+  console.log('🔍 DEBUG: kundliData.name:', kundliData.name);
+  console.log('🔍 DEBUG: typeof kundliData.name:', typeof kundliData.name);
   const name = kundliData.name || 'User';
+  console.log('🔍 DEBUG: Final name variable:', name);
   const gender = kundliData.gender || 'Not specified';
   const birthDate = kundliData.birthDate || 'Not specified';
   const birthTime = kundliData.birthTime || 'Not specified';
