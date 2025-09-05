@@ -166,7 +166,15 @@ export const pdfService = {
     reading: string
     planetaryPositions: any[]
   }): Promise<Blob> {
-    const { userDetails, question, reading, planetaryPositions } = data
+    try {
+      const { userDetails, question, reading, planetaryPositions } = data
+      
+      console.log('📄 Generating comprehensive reading PDF with data:', {
+        userDetails,
+        question: question.text,
+        readingLength: reading.length,
+        planetaryPositionsCount: planetaryPositions?.length || 0
+      });
 
     const content = `
 # Astrological Reading - Bhrigu Nandi Nadi
@@ -185,9 +193,17 @@ export const pdfService = {
 
 ## Planetary Positions
 
-${planetaryPositions.map(planet => 
-  `- ${planet.name}: ${planet.sign} ${planet.degree} in ${planet.house}th house`
-).join('\n')}
+${planetaryPositions && Array.isArray(planetaryPositions) && planetaryPositions.length > 0 
+  ? planetaryPositions.map(planet => {
+      const name = planet.name || 'Unknown';
+      const sign = planet.sign || 'Unknown';
+      const degree = planet.degree || '0°';
+      const house = planet.house || 'Unknown';
+      const nakshatra = planet.nakshatra || 'Unknown';
+      const isRetrograde = planet.is_retrograde ? ' (Retrograde)' : '';
+      return `- ${name}: ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`;
+    }).join('\n')
+  : 'Planetary positions not available from ProKerala API'}
 
 ---
 
@@ -213,6 +229,10 @@ ${reading}
       content,
       fileName: `reading-${userDetails.name}-${new Date().toISOString().split('T')[0]}.pdf`
     })
+    } catch (error) {
+      console.error('❌ Error generating comprehensive reading PDF:', error);
+      throw new Error(`Failed to generate PDF: ${error.message}`);
+    }
   },
 
   // Generate comprehensive Kundli PDF

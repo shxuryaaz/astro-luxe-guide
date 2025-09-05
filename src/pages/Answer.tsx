@@ -186,9 +186,9 @@ We apologize for the inconvenience and are working to resolve this issue.`);
       const pdfBlob = await pdfService.generateComprehensiveReadingPDF({
         userDetails: {
           name: kundliData.name || "User",
-          dateOfBirth: kundliData.dateOfBirth || "",
-          timeOfBirth: kundliData.timeOfBirth || "",
-          placeOfBirth: kundliData.placeOfBirth || "",
+          dateOfBirth: kundliData.birthDate || kundliData.dateOfBirth || "",
+          timeOfBirth: kundliData.birthTime || kundliData.timeOfBirth || "",
+          placeOfBirth: kundliData.birthPlace || kundliData.placeOfBirth || "",
         },
         question: {
           text: questionData.text,

@@ -232,11 +232,13 @@ function createBNNSystemPrompt() {
   return `You are an expert Bhrigu Nandi Nadi (BNN) astrologer. Your responses MUST follow the EXACT format below.
 
 CRITICAL REQUIREMENTS:
-1. ALWAYS use the user's ACTUAL planetary positions from their birth chart
+1. ALWAYS use the user's ACTUAL planetary positions from ProKerala birth chart data
 2. ALWAYS reference specific BNN rules from the provided context
 3. NEVER give generic astrological advice
 4. ALWAYS include the EXACT format below with NO variations
-5. Use the user's REAL name from kundliData.name
+5. Use the user's REAL name from the provided data
+6. NEVER use "undefined" or "null" in your response - use "Unknown" or "Not available" instead
+7. If ProKerala data is missing, acknowledge this limitation clearly
 
 Your role is to provide accurate, personalized astrological readings based on:
 1. The user's birth chart data (planets, houses, nakshatras)
@@ -293,21 +295,76 @@ Remember: You are a BNN specialist. Use ONLY the BNN knowledge provided in the c
  * Create user prompt for BNN readings
  */
 function createBNNUserPrompt(question, kundliData, bnnContext) {
+  // Extract ProKerala data properly
+  const name = kundliData.name || 'User';
+  const gender = kundliData.gender || 'Not specified';
+  const birthDate = kundliData.birthDate || 'Not specified';
+  const birthTime = kundliData.birthTime || 'Not specified';
+  const birthPlace = kundliData.birthPlace || 'Not specified';
+  
+  // Handle ascendant data
+  const ascendant = kundliData.ascendant?.sign || 'Unknown';
+  const ascendantDegree = kundliData.ascendant?.degree || '0°';
+  
+  // Handle nakshatra data
+  const nakshatra = kundliData.nakshatra?.name || 'Unknown';
+  const nakshatraLord = kundliData.nakshatra?.lord?.name || 'Unknown';
+  
+  // Handle rashi data
+  const chandraRashi = kundliData.chandra_rasi?.name || 'Unknown';
+  const sooryaRashi = kundliData.soorya_rasi?.name || 'Unknown';
+  const zodiac = kundliData.zodiac?.name || 'Unknown';
+  
+  // Handle planetary positions from ProKerala data
+  let planetaryPositions = '';
+  if (kundliData.planetaryPositions && Array.isArray(kundliData.planetaryPositions)) {
+    planetaryPositions = kundliData.planetaryPositions.map(planet => {
+      const name = planet.name || 'Unknown';
+      const sign = planet.sign || 'Unknown';
+      const degree = planet.degree || '0°';
+      const house = planet.house || 'Unknown';
+      const nakshatra = planet.nakshatra || 'Unknown';
+      const isRetrograde = planet.is_retrograde ? ' (Retrograde)' : '';
+      return `- ${name}: ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`;
+    }).join('\n');
+  } else {
+    planetaryPositions = 'Planetary positions not available from ProKerala API';
+  }
+  
+  // Handle houses data
+  let housesData = '';
+  if (kundliData.houses && Array.isArray(kundliData.houses)) {
+    housesData = kundliData.houses.map(house => {
+      const houseNum = house.house || 'Unknown';
+      const sign = house.sign || 'Unknown';
+      const lord = house.lord || 'Unknown';
+      const degree = house.degree || '0°';
+      return `- House ${houseNum}: ${sign} ruled by ${lord} (${degree})`;
+    }).join('\n');
+  } else {
+    housesData = 'Houses data not available from ProKerala API';
+  }
+
   const userDetails = `
 User Details:
-- Name: ${kundliData.name || 'User'}
-- Gender: ${kundliData.gender || 'Not specified'}
-- Sun: ${kundliData.sun?.sign} ${kundliData.sun?.degree}° ${kundliData.sun?.house}th house
-- Moon: ${kundliData.moon?.sign} ${kundliData.moon?.degree}° ${kundliData.moon?.house}th house
-- Mars: ${kundliData.mars?.sign} ${kundliData.mars?.degree}° ${kundliData.mars?.house}th house
-- Mercury: ${kundliData.mercury?.sign} ${kundliData.mercury?.degree}° ${kundliData.mercury?.house}th house
-- Jupiter: ${kundliData.jupiter?.sign} ${kundliData.jupiter?.degree}° ${kundliData.jupiter?.house}th house
-- Venus: ${kundliData.venus?.sign} ${kundliData.venus?.degree}° ${kundliData.venus?.house}th house
-- Saturn: ${kundliData.saturn?.sign} ${kundliData.saturn?.degree}° ${kundliData.saturn?.house}th house
-- Rahu: ${kundliData.rahu?.sign} ${kundliData.rahu?.degree}° ${kundliData.rahu?.house}th house
-- Ketu: ${kundliData.ketu?.sign} ${kundliData.ketu?.degree}° ${kundliData.ketu?.house}th house
-- Nakshatra: ${kundliData.nakshatra || 'Not specified'}
-- Ascendant: ${kundliData.ascendant || 'Not specified'}
+- Name: ${name}
+- Gender: ${gender}
+- Birth Date: ${birthDate}
+- Birth Time: ${birthTime}
+- Birth Place: ${birthPlace}
+
+Birth Chart Data (ProKerala):
+- Ascendant: ${ascendant} ${ascendantDegree}
+- Nakshatra: ${nakshatra} (Lord: ${nakshatraLord})
+- Chandra Rashi: ${chandraRashi}
+- Soorya Rashi: ${sooryaRashi}
+- Zodiac: ${zodiac}
+
+Planetary Positions:
+${planetaryPositions}
+
+Houses:
+${housesData}
 
 Analysis Request: ${question}
 
@@ -315,13 +372,14 @@ BNN Knowledge Base Context:
 ${bnnContext}
 
 CRITICAL INSTRUCTIONS:
-1. Use ONLY the planetary positions listed above - DO NOT make up any data
+1. Use ONLY the ProKerala data listed above - DO NOT make up any planetary positions
 2. Reference SPECIFIC BNN rules from the provided context
 3. Follow the EXACT format specified in the system prompt
-4. If a planet's position is missing (shows as "undefined"), skip that planet
+4. If any data shows as "Unknown" or "Not available", acknowledge this limitation
 5. Base ALL predictions on the BNN context provided, not generic astrology
+6. Use the actual planetary positions from ProKerala API for accurate readings
 
-Please provide a comprehensive BNN reading based on the above information.`;
+Please provide a comprehensive BNN reading based on the above ProKerala data and BNN knowledge.`;
   
   return userDetails;
 }
