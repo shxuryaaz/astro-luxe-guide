@@ -206,38 +206,15 @@ export const pdfService = {
       doc.setFillColor(44, 62, 80)
       doc.rect(0, 0, pageWidth, 35, 'F')
       
-      // Add logo (synchronous loading with cache busting)
+      // Add logo placeholder (text-based for now)
       try {
-        const logoUrl = `/astrologo.jpg?t=${Date.now()}`
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        
-        // Wait for image to load before adding to PDF
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            try {
-              doc.addImage(img, 'JPEG', margin, 5, 25, 25)
-              console.log('✅ Logo added to PDF successfully')
-              resolve(true)
-            } catch (error) {
-              console.log('❌ Error adding logo to PDF:', error)
-              resolve(false)
-            }
-          }
-          img.onerror = () => {
-            console.log('❌ Logo failed to load')
-            resolve(false)
-          }
-          // Timeout after 3 seconds
-          setTimeout(() => {
-            console.log('⏰ Logo loading timeout')
-            resolve(false)
-          }, 3000)
-          
-          img.src = logoUrl
-        })
+        // Add a simple text-based logo placeholder
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text('★', margin, 12)
+        console.log('✅ Logo placeholder added to PDF')
       } catch (error) {
-        console.log('❌ Logo not available:', error)
+        console.log('❌ Error adding logo placeholder:', error)
       }
       
       doc.setTextColor(255, 255, 255)
