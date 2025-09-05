@@ -28,6 +28,7 @@ export interface QuestionContext {
     dateOfBirth: string
     timeOfBirth: string
     placeOfBirth: string
+    gender?: string
   }
 }
 
@@ -71,9 +72,19 @@ export const aiService = {
       // Extract question text from the context
       const questionText = context.question.text || 'general guidance';
       
+      // Include user details in kundliData for the BNN service
+      const kundliDataWithUserDetails = {
+        ...context.kundliData,
+        name: context.userDetails.name,
+        gender: context.userDetails.gender || 'Not specified',
+        birthDate: context.userDetails.dateOfBirth,
+        birthTime: context.userDetails.timeOfBirth,
+        birthPlace: context.userDetails.placeOfBirth
+      };
+      
       const response = await backendApi.post('/api/bnn/generate-reading', {
         question: questionText,
-        kundliData: context.kundliData
+        kundliData: kundliDataWithUserDetails
       })
 
       console.log('📡 Backend response:', response.data);

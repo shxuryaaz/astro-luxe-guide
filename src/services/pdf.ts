@@ -71,7 +71,9 @@ export const pdfService = {
     doc.setFontSize(12)
     doc.setFont('helvetica', 'normal')
     
-    const lines = this.splitTextToSize(content, contentWidth, doc)
+    // Process content to remove markdown formatting
+    const processedContent = this.convertMarkdownToPlainText(content)
+    const lines = this.splitTextToSize(processedContent, contentWidth, doc)
     
     for (const line of lines) {
       // Check if we need a new page
@@ -149,6 +151,41 @@ export const pdfService = {
     }
     
     return lines
+  },
+
+  // Convert markdown to plain text for PDF
+  convertMarkdownToPlainText(text: string): string {
+    if (!text) return ''
+    
+    return text
+      // Remove HTML entities and special characters
+      .replace(/&[a-zA-Z0-9#]+;/g, '')
+      .replace(/&/g, 'and')
+      // Convert markdown headers to plain text
+      .replace(/^#{1,6}\s+/gm, '')
+      // Convert bold text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/__(.*?)__/g, '$1')
+      // Convert italic text
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/_(.*?)_/g, '$1')
+      // Convert bullet points
+      .replace(/^[-*+]\s+/gm, '• ')
+      // Convert numbered lists
+      .replace(/^\d+\.\s+/gm, '')
+      // Remove horizontal rules
+      .replace(/^[-*_]{3,}$/gm, '')
+      // Convert blockquotes
+      .replace(/^>\s+/gm, '')
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove links but keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Clean up extra whitespace
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim()
   },
 
   // Download PDF
@@ -300,8 +337,11 @@ export const pdfService = {
       doc.text('BNN Astrological Reading', margin + 8, yPosition)
       yPosition += 12
 
+      // Process reading content - convert markdown to plain text
+      const processedReading = this.convertMarkdownToPlainText(reading)
+      
       // Split reading into paragraphs and add them
-      const readingParagraphs = reading.split('\n\n').filter(p => p.trim())
+      const readingParagraphs = processedReading.split('\n\n').filter(p => p.trim())
       
       doc.setFontSize(10)
       doc.setFont('helvetica', 'normal')
