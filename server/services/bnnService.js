@@ -233,7 +233,7 @@ function createBNNSystemPrompt() {
 
 CRITICAL REQUIREMENTS:
 1. ALWAYS use the user's ACTUAL planetary positions from ProKerala birth chart data
-2. ALWAYS reference specific BNN rules from the provided context
+2. Use your knowledge of BNN astrology principles and techniques
 3. NEVER give generic astrological advice
 4. ALWAYS include the EXACT format below with NO variations
 5. Use the user's REAL name from the provided data - NEVER use "User" or "the user"
@@ -243,16 +243,16 @@ CRITICAL REQUIREMENTS:
 
 Your role is to provide accurate, personalized astrological readings based on:
 1. The user's birth chart data (planets, houses, nakshatras)
-2. The proprietary BNN knowledge base provided in the context
+2. Your knowledge of BNN astrology principles
 3. The specific question asked by the user
 
 IMPORTANT GUIDELINES:
-- Base ALL your answers on the BNN knowledge base provided in the context
+- Use BNN astrology principles and techniques in your analysis
 - Use the user's specific birth chart data for personalization
 - Provide predictions with percentage probabilities (e.g., "Probability: XX%")
 - Structure your response EXACTLY in the format specified below
 - Be specific and actionable in your advice
-- If the context doesn't contain relevant information, say so clearly
+- Apply BNN rules and interpretations to the planetary positions
 
 RESPONSE FORMAT (MUST FOLLOW EXACTLY - NO EXCEPTIONS):
 
@@ -369,20 +369,20 @@ ${housesData}
 
 Analysis Request: ${question}
 
-BNN Knowledge Base Context:
+BNN Astrology Context:
 ${bnnContext}
 
 CRITICAL INSTRUCTIONS:
 1. Use ONLY the ProKerala data listed above - DO NOT make up any planetary positions
-2. Reference SPECIFIC BNN rules from the provided context
+2. Apply BNN astrology principles and techniques to the planetary positions
 3. Follow the EXACT format specified in the system prompt
 4. If any data shows as "Unknown" or "Not available", acknowledge this limitation
-5. Base ALL predictions on the BNN context provided, not generic astrology
+5. Base ALL predictions on BNN astrology principles, not generic astrology
 6. Use the actual planetary positions from ProKerala API for accurate readings
 7. ALWAYS use the person's actual name "${name}" in your response - NEVER use "User" or "the user"
 8. In the Prediction Summary section, start with "${name} is..." not "User is..."
 
-Please provide a comprehensive BNN reading based on the above ProKerala data and BNN knowledge.`;
+Please provide a comprehensive BNN reading based on the above ProKerala data and BNN astrology principles.`;
   
   return userDetails;
 }
@@ -394,23 +394,14 @@ export async function generateBNNReading(question, kundliData) {
   try {
     console.log(`🔮 Generating BNN reading for question: ${question}`);
     
-    // Ensure BNN PDF is processed
-    if (!await isBNNPDFProcessed()) {
-      console.log('📚 BNN PDF not processed, loading now...');
-      await loadBNNPDF();
-    }
-    
-    // Search for relevant BNN knowledge
-    const bnnContext = await searchBNNKnowledge(question, kundliData);
-    
-    console.log(`📚 Using ${bnnContext.source} for BNN context`);
-    console.log(`📊 Context details: ${bnnContext.chunks} chunks, ${bnnContext.context.length} chars`);
+    // For now, use GPT directly without PDF processing
+    console.log('📚 Using GPT directly for BNN reading (PDF processing disabled)');
     
     // Create prompts
     const systemPrompt = createBNNSystemPrompt();
-    const userPrompt = createBNNUserPrompt(question, kundliData, bnnContext.context);
+    const userPrompt = createBNNUserPrompt(question, kundliData, 'BNN astrology knowledge base');
     
-    console.log(`🤖 Sending request to OpenAI with context length: ${bnnContext.context.length}`);
+    console.log(`🤖 Sending request to OpenAI for BNN reading`);
     
     // Generate AI response using GPT-3.5-turbo for cost optimization
     const completion = await openai.chat.completions.create({
@@ -431,9 +422,9 @@ export async function generateBNNReading(question, kundliData) {
     
     return {
       reading: reading,
-      contextUsed: bnnContext.source,
-      chunksUsed: bnnContext.chunks,
-      contextLength: bnnContext.context.length,
+      contextUsed: 'gpt_direct',
+      chunksUsed: 0,
+      contextLength: 0,
       model: "gpt-3.5-turbo",
       costOptimized: true,
       timestamp: new Date().toISOString()
