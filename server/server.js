@@ -220,75 +220,118 @@ app.post('/api/prokerala/*', async (req, res) => {
     // Map our endpoints to ProKerala API endpoints
     const endpointMap = {
       'coordinates': ['geocoding', 'coordinates'],
-      'kundli': ['birth-chart', 'kundli', 'horoscope']
+      'kundli': ['birth-chart', 'kundli', 'horoscope', 'planetary-positions', 'houses', 'ascendant']
     };
     
     const possibleEndpoints = endpointMap[targetPath] || [targetPath];
     let response = null;
     let lastError = null;
     
-    // Try different endpoint names
-    for (const endpoint of possibleEndpoints) {
-      let targetUrl = `https://api.prokerala.com/v2/astrology/${endpoint}`;
+    // For kundli requests, try multiple endpoints to get complete data
+    if (targetPath === 'kundli' && req.body.birthDetails) {
+      const details = req.body.birthDetails;
+      const params = new URLSearchParams();
       
-      console.log(`🔄 Trying endpoint: ${targetUrl}`);
-      console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
+      // Format datetime for ProKerala API
+      const dateTime = `${details.dateOfBirth}T${details.timeOfBirth}:00+05:30`; // Assuming IST timezone
+      params.append('datetime', dateTime);
       
-      // Convert POST body to GET query parameters for ProKerala API
-      let queryParams = '';
-      if (req.body) {
-        if (targetPath === 'coordinates' && req.body.place) {
-          queryParams = `?place=${encodeURIComponent(req.body.place)}`;
-        } else if (targetPath === 'kundli' && req.body.birthDetails) {
-          const details = req.body.birthDetails;
-          const params = new URLSearchParams();
-          
-          // Format datetime for ProKerala API
-          const dateTime = `${details.dateOfBirth}T${details.timeOfBirth}:00+05:30`; // Assuming IST timezone
-          params.append('datetime', dateTime);
-          
-          if (details.coordinates) {
-            params.append('coordinates', `${details.coordinates.latitude},${details.coordinates.longitude}`);
-          }
-          
-          // Add other parameters
-          params.append('ayanamsa', '1'); // Lahiri Ayanamsa
-          params.append('la', 'en'); // Language
-          if (details.gender) {
-            params.append('gender', details.gender);
-          }
-          
-          queryParams = `?${params.toString()}`;
-        }
+      if (details.coordinates) {
+        params.append('coordinates', `${details.coordinates.latitude},${details.coordinates.longitude}`);
       }
       
-      targetUrl += queryParams;
-      console.log(`🔗 Final URL: ${targetUrl}`);
+      // Add other parameters
+      params.append('ayanamsa', '1'); // Lahiri Ayanamsa
+      params.append('la', 'en'); // Language
+      if (details.gender) {
+        params.append('gender', details.gender);
+      }
       
-      try {
-        response = await fetch(targetUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json'
-          }
-        });
+      const queryString = params.toString();
+      let combinedData = {};
+      
+      // Try multiple endpoints to get complete data
+      const endpointsToTry = ['kundli', 'birth-chart', 'planetary-positions', 'houses'];
+      
+      for (const endpoint of endpointsToTry) {
+        const targetUrl = `https://api.prokerala.com/v2/astrology/${endpoint}?${queryString}`;
+        console.log(`🔄 Trying endpoint: ${targetUrl}`);
         
-        if (response.ok) {
-          console.log(`✅ Success with endpoint: ${endpoint}`);
-          break;
-        } else {
-          console.log(`❌ Failed with endpoint: ${endpoint} (${response.status})`);
-          lastError = response;
+        try {
+          const endpointResponse = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (endpointResponse.ok) {
+            const endpointData = await endpointResponse.json();
+            console.log(`✅ Success with endpoint: ${endpoint}`);
+            
+            // Merge the data
+            if (endpointData && endpointData.status === 'ok' && endpointData.data) {
+              combinedData = { ...combinedData, ...endpointData.data };
+            }
+          } else {
+            console.log(`❌ Failed with endpoint: ${endpoint} (${endpointResponse.status})`);
+          }
+        } catch (error) {
+          console.log(`❌ Error with endpoint: ${endpoint}`, error.message);
         }
-      } catch (error) {
-        console.log(`❌ Error with endpoint: ${endpoint}`, error.message);
-        lastError = error;
       }
-    }
-    
-    if (!response || !response.ok) {
-      response = lastError;
+      
+      // Create a mock response object with the combined data
+      response = {
+        ok: true,
+        status: 200,
+        json: async () => ({ status: 'ok', data: combinedData })
+      };
+    } else {
+      // For other requests (like coordinates), use the original logic
+      for (const endpoint of possibleEndpoints) {
+        let targetUrl = `https://api.prokerala.com/v2/astrology/${endpoint}`;
+        
+        console.log(`🔄 Trying endpoint: ${targetUrl}`);
+        console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
+        
+        // Convert POST body to GET query parameters for ProKerala API
+        let queryParams = '';
+        if (req.body) {
+          if (targetPath === 'coordinates' && req.body.place) {
+            queryParams = `?place=${encodeURIComponent(req.body.place)}`;
+          }
+        }
+        
+        targetUrl += queryParams;
+        console.log(`🔗 Final URL: ${targetUrl}`);
+        
+        try {
+          response = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            console.log(`✅ Success with endpoint: ${endpoint}`);
+            break;
+          } else {
+            console.log(`❌ Failed with endpoint: ${endpoint} (${response.status})`);
+            lastError = response;
+          }
+        } catch (error) {
+          console.log(`❌ Error with endpoint: ${endpoint}`, error.message);
+          lastError = error;
+        }
+      }
+      
+      if (!response || !response.ok) {
+        response = lastError;
+      }
     }
     
     console.log(`📥 Response status: ${response.status}`);
@@ -304,55 +347,49 @@ app.post('/api/prokerala/*', async (req, res) => {
       });
     }
     
-    const data = await response.json();
-    console.log(`📥 Response data:`, JSON.stringify(data, null, 2));
+    const responseData = await response.json();
+    console.log(`📥 Response data:`, JSON.stringify(responseData, null, 2));
     
-    // Validate critical fields and provide fallbacks
-    if (data && typeof data === 'object') {
-      // Ensure ascendant field exists
-      if (!data.ascendant || !data.ascendant.sign || !data.ascendant.degree) {
-        console.warn('⚠️ Ascendant field missing or invalid, providing fallback');
-        data.ascendant = { sign: "Unknown", degree: "0°" };
+    // Extract and map the data from ProKerala API response
+    let data = {};
+    
+    if (responseData && responseData.status === 'ok' && responseData.data) {
+      const apiData = responseData.data;
+      
+      // Map nakshatra details
+      if (apiData.nakshatra_details) {
+        data.nakshatra = apiData.nakshatra_details.nakshatra || null;
+        data.chandra_rasi = apiData.nakshatra_details.chandra_rasi || null;
+        data.soorya_rasi = apiData.nakshatra_details.soorya_rasi || null;
+        data.zodiac = apiData.nakshatra_details.zodiac || null;
+        data.additional_info = apiData.nakshatra_details.additional_info || null;
       }
       
-      // Ensure planetary_positions exists
-      if (!data.planetary_positions || !Array.isArray(data.planetary_positions)) {
-        console.warn('⚠️ Planetary positions missing or invalid, providing fallback');
-        data.planetary_positions = [];
-      }
+      // Map other data
+      data.mangal_dosha = apiData.mangal_dosha || null;
+      data.yoga_details = apiData.yoga_details || [];
       
-      // Ensure houses exists
-      if (!data.houses || !Array.isArray(data.houses)) {
-        console.warn('⚠️ Houses missing or invalid, providing fallback');
-        data.houses = [];
-      }
+      // For now, provide fallbacks for missing fields
+      data.ascendant = { sign: "Unknown", degree: "0°" }; // Will be populated when we get the right endpoint
+      data.planetary_positions = []; // Will be populated when we get the right endpoint
+      data.houses = []; // Will be populated when we get the right endpoint
       
-      // Ensure nakshatra field is not undefined
-      if (data.nakshatra === undefined) {
-        console.warn('⚠️ Nakshatra field is undefined, setting to null');
-        data.nakshatra = null;
-      }
-      
-      // Ensure other optional fields are not undefined
-      if (data.chandra_rasi === undefined) {
-        console.warn('⚠️ Chandra rasi field is undefined, setting to null');
-        data.chandra_rasi = null;
-      }
-      
-      if (data.soorya_rasi === undefined) {
-        console.warn('⚠️ Soorya rasi field is undefined, setting to null');
-        data.soorya_rasi = null;
-      }
-      
-      if (data.zodiac === undefined) {
-        console.warn('⚠️ Zodiac field is undefined, setting to null');
-        data.zodiac = null;
-      }
-      
-      if (data.additional_info === undefined) {
-        console.warn('⚠️ Additional info field is undefined, setting to null');
-        data.additional_info = null;
-      }
+      console.log('✅ Mapped ProKerala data successfully');
+    } else {
+      console.warn('⚠️ Invalid ProKerala API response structure');
+      // Provide fallbacks
+      data = {
+        ascendant: { sign: "Unknown", degree: "0°" },
+        planetary_positions: [],
+        houses: [],
+        nakshatra: null,
+        chandra_rasi: null,
+        soorya_rasi: null,
+        zodiac: null,
+        additional_info: null,
+        mangal_dosha: null,
+        yoga_details: []
+      };
     }
     
     res.json(data);
