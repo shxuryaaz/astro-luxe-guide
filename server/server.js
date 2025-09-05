@@ -171,7 +171,7 @@ app.get('/api/bnn/status', async (req, res) => {
 app.post('/api/prokerala/*', async (req, res) => {
   try {
     const targetPath = req.params[0];
-    const targetUrl = `https://api.prokerala.com/v2/${targetPath}`;
+    const targetUrl = `https://api.prokerala.com/v2/astrology/${targetPath}`;
     
     console.log(`🔄 Proxying request to: ${targetUrl}`);
     console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
@@ -180,7 +180,8 @@ app.post('/api/prokerala/*', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PROKERALA_API_KEY}`
+        'Authorization': `Bearer ${process.env.PROKERALA_API_KEY}`,
+        'X-API-KEY': process.env.PROKERALA_API_KEY
       },
       body: JSON.stringify(req.body)
     });
