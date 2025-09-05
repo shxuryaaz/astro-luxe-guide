@@ -286,6 +286,9 @@ app.post('/api/prokerala/*', async (req, res) => {
       response = {
         ok: true,
         status: 200,
+        headers: {
+          entries: () => [['content-type', 'application/json']]
+        },
         json: async () => ({ status: 'ok', data: combinedData })
       };
     } else {
