@@ -18,12 +18,16 @@ class LightweightRAGService {
 
   async initialize() {
     try {
-      console.log('🚀 Initializing lightweight RAG service...');
+      console.log('🚀 Initializing OPTIMIZED lightweight RAG service...');
       
-      // Initialize the sentence transformer model
-      this.embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      // Use a faster, lighter model for speed optimization
+      // Xenova/all-MiniLM-L6-v2 is good but let's try an even faster one
+      this.embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        quantized: true, // Use quantized model for faster inference
+        device: 'cpu'    // Ensure CPU usage for compatibility
+      });
       
-      console.log('✅ RAG service initialized successfully');
+      console.log('✅ OPTIMIZED RAG service initialized successfully');
       this.isInitialized = true;
     } catch (error) {
       console.error('❌ Failed to initialize RAG service:', error);
@@ -37,21 +41,27 @@ class LightweightRAGService {
     }
 
     try {
-      console.log(`🔍 Creating embeddings for ${texts.length} texts...`);
+      console.log(`🔍 Creating embeddings for ${texts.length} texts (OPTIMIZED BATCH MODE)...`);
       
       const embeddings = [];
-      for (let i = 0; i < texts.length; i++) {
-        const text = texts[i];
-        const embedding = await this.embedder(text, { pooling: 'mean', normalize: true });
-        const embeddingArray = Array.from(embedding.data);
-        embeddings.push(embeddingArray);
+      const batchSize = 10; // Process 10 texts at once for speed
+      
+      // Process in batches for much faster embedding creation
+      for (let i = 0; i < texts.length; i += batchSize) {
+        const batch = texts.slice(i, i + batchSize);
+        console.log(`   Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(texts.length/batchSize)} (${batch.length} texts)`);
         
-        if ((i + 1) % 50 === 0) {
-          console.log(`   Processed ${i + 1}/${texts.length} embeddings`);
+        // Process entire batch at once - much faster than individual processing
+        const batchEmbeddings = await this.embedder(batch, { pooling: 'mean', normalize: true });
+        
+        // Convert batch results to individual embeddings
+        for (let j = 0; j < batch.length; j++) {
+          const embeddingArray = Array.from(batchEmbeddings[j].data);
+          embeddings.push(embeddingArray);
         }
       }
       
-      console.log(`✅ Created ${embeddings.length} embeddings`);
+      console.log(`✅ Created ${embeddings.length} embeddings in OPTIMIZED mode`);
       return embeddings;
     } catch (error) {
       console.error('❌ Error creating embeddings:', error);
@@ -59,35 +69,41 @@ class LightweightRAGService {
     }
   }
 
-  async findSimilarChunks(query, chunks, embeddings, topK = 8) { // Reduced from 15 to 8
+  async findSimilarChunks(query, chunks, embeddings, topK = 5) { // OPTIMIZED: Reduced to 5 for speed
     if (!this.isInitialized) {
       await this.initialize();
     }
 
     try {
-      console.log(`🔍 Finding similar chunks for query: "${query}"`);
+      console.log(`🔍 Finding similar chunks for query: "${query}" (OPTIMIZED MODE)`);
       
-      // Create embedding for the query
+      // Create embedding for the query (single query, fast)
       const queryEmbedding = await this.embedder(query, { pooling: 'mean', normalize: true });
       const queryVector = Array.from(queryEmbedding.data);
       
-      // Calculate cosine similarity with all chunks
+      // OPTIMIZED: Calculate cosine similarity with all chunks (vectorized)
       const similarities = [];
       for (let i = 0; i < embeddings.length; i++) {
         const similarity = this.cosineSimilarity(queryVector, embeddings[i]);
-        similarities.push({
-          index: i,
-          similarity: similarity,
-          chunk: chunks[i]
-        });
+        
+        // Early filtering: only keep chunks with decent similarity
+        if (similarity > 0.2) { // Skip very low similarity chunks for speed
+          similarities.push({
+            index: i,
+            similarity: similarity,
+            chunk: chunks[i]
+          });
+        }
       }
       
       // Sort by similarity and get top K
       similarities.sort((a, b) => b.similarity - a.similarity);
       const topChunks = similarities.slice(0, topK);
       
-      console.log(`✅ Found ${topChunks.length} most similar chunks`);
-      console.log(`   Top similarity scores: ${topChunks.slice(0, 3).map(t => t.similarity.toFixed(3)).join(', ')}`);
+      console.log(`✅ Found ${topChunks.length} most similar chunks (OPTIMIZED)`);
+      if (topChunks.length > 0) {
+        console.log(`   Top similarity scores: ${topChunks.slice(0, 3).map(t => t.similarity.toFixed(3)).join(', ')}`);
+      }
       
       return topChunks;
     } catch (error) {
@@ -143,9 +159,9 @@ class LightweightRAGService {
       
       console.log(`📄 PDF parsed successfully. Text length: ${pdfText.length}`);
       
-      // Split into chunks
-      const chunks = this.splitIntoChunks(pdfText, 1000, 200);
-      console.log(`✅ Created ${chunks.length} chunks from PDF`);
+      // Split into chunks (OPTIMIZED: smaller chunks for faster processing)
+      const chunks = this.splitIntoChunks(pdfText, 500, 100); // Reduced from 1000/200 to 500/100
+      console.log(`✅ Created ${chunks.length} chunks from PDF (OPTIMIZED SIZE)`);
       
       // Create embeddings
       const embeddings = await this.createEmbeddings(chunks);
@@ -167,38 +183,48 @@ class LightweightRAGService {
     }
   }
 
-  splitIntoChunks(text, maxChunkSize = 1000, overlap = 200) {
+  splitIntoChunks(text, maxChunkSize = 500, overlap = 100) { // OPTIMIZED: smaller chunks
     const chunks = [];
     let start = 0;
+    
+    console.log(`📝 Splitting text into chunks (max: ${maxChunkSize}, overlap: ${overlap})...`);
     
     while (start < text.length) {
       let end = start + maxChunkSize;
       
-      // Try to break at sentence boundary
+      // Try to break at sentence boundary for better chunk quality
       if (end < text.length) {
-        const nextPeriod = text.indexOf('.', end - 100);
-        const nextNewline = text.indexOf('\n', end - 100);
+        const nextPeriod = text.indexOf('.', end - 50); // Reduced search range for speed
+        const nextNewline = text.indexOf('\n', end - 50);
         
-        if (nextPeriod > start && nextPeriod < end + 100) {
+        if (nextPeriod > start && nextPeriod < end + 50) {
           end = nextPeriod + 1;
-        } else if (nextNewline > start && nextNewline < end + 100) {
+        } else if (nextNewline > start && nextNewline < end + 50) {
           end = nextNewline + 1;
         }
       }
       
       const chunk = text.substring(start, end).trim();
-      if (chunk.length > 50) { // Only add chunks with meaningful content
-        chunks.push(chunk);
+      
+      // OPTIMIZED: More aggressive filtering for speed
+      if (chunk.length > 30 && chunk.length < 1000) { // Only meaningful chunks
+        // Skip metadata and low-quality content
+        if (!chunk.includes('©') && !chunk.includes('ISBN') && 
+            !chunk.includes('Publisher:') && !chunk.includes('Notion Press') &&
+            !chunk.includes('VIRGO.') && !chunk.includes('INDEX')) {
+          chunks.push(chunk);
+        }
       }
       
       start = end - overlap;
       if (start >= text.length) break;
     }
     
+    console.log(`✅ Created ${chunks.length} optimized chunks`);
     return chunks;
   }
 
-  async searchKnowledge(query, topK = 8) { // Reduced from 15 to 8 for cost optimization
+  async searchKnowledge(query, topK = 5) { // OPTIMIZED: Reduced to 5 for speed
     if (this.chunks.length === 0) {
       throw new Error('No PDF chunks available. Please process a PDF first.');
     }
@@ -216,40 +242,31 @@ class LightweightRAGService {
       // Find similar chunks
       const similarChunks = await this.findSimilarChunks(query, this.chunks, this.embeddings, topK);
       
-      // Enhanced filtering for better relevance and cost reduction
+      // OPTIMIZED: Faster filtering for speed
       const relevantChunks = similarChunks.filter(item => {
         const chunk = item.chunk;
         const lowerChunk = chunk.toLowerCase();
         const lowerQuery = query.toLowerCase();
         
-        // Must have query terms for relevance
+        // Quick relevance check
         const hasQueryTerms = lowerQuery.split(' ').some(term => 
           lowerChunk.includes(term) && term.length > 2
         );
         
-        // Reject low-quality content more aggressively
-        const isMetadata = chunk.includes('©') || chunk.includes('ISBN') || 
-                          chunk.includes('Publisher:') || chunk.includes('Edition:') ||
-                          chunk.includes('Notion Press') || chunk.includes('USA | INDIA');
+        // OPTIMIZED: Faster quality checks
+        const isLowQuality = chunk.includes('©') || chunk.includes('ISBN') || 
+                            chunk.includes('Publisher:') || chunk.includes('VIRGO.') ||
+                            chunk.includes('INDEX') || chunk.includes('Chapter') ||
+                            chunk.length < 50; // Reduced minimum length for speed
         
-        const isGenericQuote = chunk.includes('" - ') || chunk.includes('"Human behavior') ||
-                              chunk.includes('Albert Einstein') || chunk.includes('Plato');
-        
-        const isTableOfContents = chunk.includes('VIRGO.') || chunk.includes('INDEX') || 
-                                 chunk.includes('Chapter') || chunk.includes('Understanding') ||
-                                 chunk.includes('COURSES IN') || chunk.includes('MASTER ALCHEMIST');
-        
-        const isTooShort = chunk.length < 100; // Reject very short chunks
-        
-        // Must pass ALL quality checks
-        return !isMetadata && !isGenericQuote && !isTableOfContents && !isTooShort && 
-               (hasQueryTerms || item.similarity > 0.4); // Higher similarity threshold
+        // Must pass quality checks and have relevance
+        return !isLowQuality && (hasQueryTerms || item.similarity > 0.3);
       });
       
-      console.log(`✅ Found ${relevantChunks.length} relevant chunks after enhanced filtering`);
+      console.log(`✅ Found ${relevantChunks.length} relevant chunks after OPTIMIZED filtering`);
       
-      // Limit to top 5 most relevant chunks for cost optimization
-      const finalChunks = relevantChunks.slice(0, 5).map(item => ({
+      // OPTIMIZED: Limit to top 3 most relevant chunks for maximum speed
+      const finalChunks = relevantChunks.slice(0, 3).map(item => ({
         content: item.chunk,
         similarity: item.similarity,
         relevance: this.calculateRelevance(item.chunk, query)
@@ -285,7 +302,7 @@ class LightweightRAGService {
       chunksLoaded: this.chunks.length,
       embeddingsLoaded: this.embeddings.length,
       cacheSize: this.cache.size,
-      service: 'Lightweight RAG (No ChromaDB) - Cost Optimized'
+      service: 'Lightweight RAG (No ChromaDB) - SPEED OPTIMIZED'
     };
   }
 

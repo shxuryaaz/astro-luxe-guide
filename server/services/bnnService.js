@@ -90,7 +90,8 @@ export async function loadBNNPDF() {
  */
 async function processPDF() {
   try {
-    console.log('🔄 Starting BNN PDF processing...');
+    console.log('🔄 Starting OPTIMIZED BNN PDF processing...');
+    const startTime = Date.now();
     
     const pdfPath = path.join(__dirname, '../../BNN_05_Dec_24.pdf');
     
@@ -139,7 +140,10 @@ async function processPDF() {
       lastProcessed: new Date().toISOString()
     };
     
-    console.log('✅ BNN PDF processed successfully with RAG service');
+    const endTime = Date.now();
+    const processingTime = ((endTime - startTime) / 1000).toFixed(2);
+    
+    console.log(`✅ BNN PDF processed successfully with OPTIMIZED RAG service in ${processingTime}s`);
     console.log(`📊 Processing summary:`, bnnProcessingStatus);
     
     return bnnProcessingStatus;
@@ -161,7 +165,7 @@ async function searchBNNKnowledge(query, kundliData) {
     
     // Try RAG service first
     try {
-      const relevantChunks = await ragService.searchKnowledge(query, 15);
+      const relevantChunks = await ragService.searchKnowledge(query, 5); // OPTIMIZED: Reduced from 15 to 5 for speed
       
       if (relevantChunks && relevantChunks.length > 0) {
         console.log(`✅ RAG service found ${relevantChunks.length} relevant chunks`);
