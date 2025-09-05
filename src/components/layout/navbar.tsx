@@ -55,7 +55,7 @@ export const Navbar = () => {
           <NavLink to="/dashboard" className="flex items-center gap-3">
             <div className="p-1 rounded-lg bg-cosmic">
               <img 
-                src="/astrologo.png" 
+                src="/astrologo.jpg" 
                 alt="Astrometry Logo" 
                 className="w-8 h-8 object-contain"
                 onError={(e) => {

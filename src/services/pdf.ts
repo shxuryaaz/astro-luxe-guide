@@ -38,10 +38,10 @@ export const pdfService = {
       
       // Add logo (if available)
       try {
-        const logoUrl = '/astrologo.png'
+        const logoUrl = '/astrologo.jpg'
         const img = new Image()
         img.onload = () => {
-          doc.addImage(img, 'PNG', margin, 5, 25, 25)
+          doc.addImage(img, 'JPEG', margin, 5, 25, 25)
         }
         img.src = logoUrl
       } catch (error) {
@@ -188,54 +188,174 @@ export const pdfService = {
         planetaryPositionsCount: planetaryPositions?.length || 0
       });
 
-    const content = `
-# Astrological Reading - BNN
+      // Create new PDF document
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
 
-## Client Information
-- **Name:** ${userDetails.name}
-- **Date of Birth:** ${userDetails.dateOfBirth}
-- **Time of Birth:** ${userDetails.timeOfBirth}
-- **Place of Birth:** ${userDetails.placeOfBirth}
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 20
+      const contentWidth = pageWidth - (margin * 2)
 
-## Question Analysis
-- **Question:** ${question.text}
-- **Category:** ${question.category}
-- **System:** Bhrigu Nandi Nadi (BNN)
+      let yPosition = margin
 
-## Key Planetary Positions
+      // Add header with logo
+      doc.setFillColor(44, 62, 80)
+      doc.rect(0, 0, pageWidth, 35, 'F')
+      
+      // Add logo
+      try {
+        const logoUrl = '/astrologo.jpg'
+        const img = new Image()
+        img.onload = () => {
+          doc.addImage(img, 'JPEG', margin, 5, 25, 25)
+        }
+        img.src = logoUrl
+      } catch (error) {
+        console.log('Logo not available')
+      }
+      
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Astrometry', margin + 30, 18)
+      
+      doc.setFontSize(10)
+      doc.text('Bhrigu Nandi Nadi Reading', margin + 30, 26)
+      
+      // Reset text color and position
+      doc.setTextColor(0, 0, 0)
+      yPosition = 45
 
-${planetaryPositions && Array.isArray(planetaryPositions) && planetaryPositions.length > 0 
-  ? planetaryPositions.map(planet => {
-      const name = planet.name || 'Unknown';
-      const sign = planet.sign || 'Unknown';
-      const degree = planet.degree || '0°';
-      const house = planet.house || 'Unknown';
-      const nakshatra = planet.nakshatra || 'Unknown';
-      const isRetrograde = planet.is_retrograde ? ' (Retrograde)' : '';
-      return `- **${name}:** ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`;
-    }).join('\n')
-  : 'Planetary positions not available from ProKerala API'}
+      // Main title
+      doc.setFontSize(22)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Astrological Reading - BNN', margin, yPosition)
+      yPosition += 12
 
-## BNN Astrological Reading
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Bhrigu Nandi Nadi Analysis', margin, yPosition)
+      yPosition += 20
 
-${reading}
+      // Client Information Section
+      doc.setFillColor(245, 245, 245)
+      doc.rect(margin, yPosition - 8, contentWidth, 12, 'F')
+      
+      doc.setFontSize(13)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Client Information', margin + 8, yPosition)
+      yPosition += 12
 
-## Important Notes
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Name: ${userDetails.name}`, margin + 5, yPosition)
+      yPosition += 5
+      doc.text(`Date of Birth: ${userDetails.dateOfBirth}`, margin + 5, yPosition)
+      yPosition += 5
+      doc.text(`Time of Birth: ${userDetails.timeOfBirth}`, margin + 5, yPosition)
+      yPosition += 5
+      doc.text(`Place of Birth: ${userDetails.placeOfBirth}`, margin + 5, yPosition)
+      yPosition += 5
+      doc.text(`Question: ${question.text}`, margin + 5, yPosition)
+      yPosition += 5
+      doc.text(`System: Bhrigu Nandi Nadi (BNN)`, margin + 5, yPosition)
+      yPosition += 15
 
-- This reading is based on the ancient Bhrigu Nandi Nadi system
-- Astrology reveals potential - your choices determine your destiny
-- Consult with qualified professionals for important life decisions
-- This reading is for guidance purposes only
+      // Planetary Positions Section
+      if (planetaryPositions && Array.isArray(planetaryPositions) && planetaryPositions.length > 0) {
+        doc.setFillColor(245, 245, 245)
+        doc.rect(margin, yPosition - 8, contentWidth, 12, 'F')
+        
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Key Planetary Positions', margin + 8, yPosition)
+        yPosition += 12
 
-**Generated on:** ${new Date().toLocaleDateString()}
-**System:** Astrometry - BNN Analysis
-    `.trim()
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        
+        planetaryPositions.forEach(planet => {
+          const name = planet.name || 'Unknown'
+          const sign = planet.sign || 'Unknown'
+          const degree = planet.degree || '0°'
+          const house = planet.house || 'Unknown'
+          const nakshatra = planet.nakshatra || 'Unknown'
+          const isRetrograde = planet.is_retrograde ? ' (Retrograde)' : ''
+          
+          doc.text(`${name}: ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`, margin + 5, yPosition)
+          yPosition += 4
+        })
+        yPosition += 10
+      }
 
-    return this.generateReadingPDF({
-      title: 'Astrological Reading - BNN',
-      content,
-      fileName: `reading-${userDetails.name}-${new Date().toISOString().split('T')[0]}.pdf`
-    })
+      // Reading Section
+      doc.setFillColor(245, 245, 245)
+      doc.rect(margin, yPosition - 8, contentWidth, 12, 'F')
+      
+      doc.setFontSize(13)
+      doc.setFont('helvetica', 'bold')
+      doc.text('BNN Astrological Reading', margin + 8, yPosition)
+      yPosition += 12
+
+      // Split reading into paragraphs and add them
+      const readingParagraphs = reading.split('\n\n').filter(p => p.trim())
+      
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      
+      readingParagraphs.forEach(paragraph => {
+        const lines = doc.splitTextToSize(paragraph.trim(), contentWidth - 10)
+        lines.forEach((line: string) => {
+          if (yPosition > pageHeight - 30) {
+            doc.addPage()
+            yPosition = margin
+          }
+          doc.text(line, margin + 5, yPosition)
+          yPosition += 4
+        })
+        yPosition += 2
+      })
+
+      // Important Notes Section
+      if (yPosition > pageHeight - 60) {
+        doc.addPage()
+        yPosition = margin
+      }
+
+      doc.setFillColor(245, 245, 245)
+      doc.rect(margin, yPosition - 8, contentWidth, 12, 'F')
+      
+      doc.setFontSize(13)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Important Notes', margin + 8, yPosition)
+      yPosition += 12
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      const notes = [
+        'This reading is based on the ancient Bhrigu Nandi Nadi system',
+        'Astrology reveals potential - your choices determine your destiny',
+        'Consult with qualified professionals for important life decisions',
+        'This reading is for guidance purposes only'
+      ]
+      
+      notes.forEach(note => {
+        doc.text(`• ${note}`, margin + 5, yPosition)
+        yPosition += 4
+      })
+
+      // Footer
+      yPosition = pageHeight - 15
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition)
+      doc.text('System: Astrometry - BNN Analysis', pageWidth - margin - 50, yPosition)
+
+      return doc.output('blob')
     } catch (error) {
       console.error('❌ Error generating comprehensive reading PDF:', error);
       throw new Error(`Failed to generate PDF: ${error.message}`);
