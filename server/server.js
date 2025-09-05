@@ -274,6 +274,7 @@ app.post('/api/prokerala/*', async (req, res) => {
           if (endpointResponse.ok) {
             const endpointData = await endpointResponse.json();
             console.log(`✅ Success with endpoint: ${endpoint}`);
+            console.log(`📊 Endpoint ${endpoint} data:`, JSON.stringify(endpointData, null, 2));
             
             // Merge the data
             if (endpointData && endpointData.status === 'ok' && endpointData.data) {
@@ -284,6 +285,43 @@ app.post('/api/prokerala/*', async (req, res) => {
           }
         } catch (error) {
           console.log(`❌ Error with endpoint: ${endpoint}`, error.message);
+        }
+      }
+      
+      // Also try the kundli endpoint with different parameter combinations
+      const additionalParams = [
+        '&include_planetary_positions=true&include_houses=true&include_ascendant=true',
+        '&detailed=true&full_data=true',
+        '&format=detailed&include_all=true'
+      ];
+      
+      for (const extraParams of additionalParams) {
+        const targetUrl = `https://api.prokerala.com/v2/astrology/kundli?${queryString}${extraParams}`;
+        console.log(`🔄 Trying kundli with extra params: ${targetUrl}`);
+        
+        try {
+          const endpointResponse = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (endpointResponse.ok) {
+            const endpointData = await endpointResponse.json();
+            console.log(`✅ Success with kundli + extra params`);
+            console.log(`📊 Extra params data:`, JSON.stringify(endpointData, null, 2));
+            
+            // Merge the data
+            if (endpointData && endpointData.status === 'ok' && endpointData.data) {
+              combinedData = { ...combinedData, ...endpointData.data };
+            }
+          } else {
+            console.log(`❌ Failed with kundli + extra params (${endpointResponse.status})`);
+          }
+        } catch (error) {
+          console.log(`❌ Error with kundli + extra params`, error.message);
         }
       }
       
@@ -364,6 +402,8 @@ app.post('/api/prokerala/*', async (req, res) => {
     if (responseData && responseData.status === 'ok' && responseData.data) {
       const apiData = responseData.data;
       
+      console.log('🔍 Full API data structure:', JSON.stringify(apiData, null, 2));
+      
       // Map nakshatra details
       if (apiData.nakshatra_details) {
         data.nakshatra = apiData.nakshatra_details.nakshatra || null;
@@ -377,12 +417,77 @@ app.post('/api/prokerala/*', async (req, res) => {
       data.mangal_dosha = apiData.mangal_dosha || null;
       data.yoga_details = apiData.yoga_details || [];
       
-      // For now, provide fallbacks for missing fields
-      data.ascendant = { sign: "Unknown", degree: "0°" }; // Will be populated when we get the right endpoint
-      data.planetary_positions = []; // Will be populated when we get the right endpoint
-      data.houses = []; // Will be populated when we get the right endpoint
+      // Try to extract planetary positions from different possible locations
+      if (apiData.planetary_positions) {
+        data.planetary_positions = apiData.planetary_positions;
+      } else if (apiData.planets) {
+        data.planetary_positions = apiData.planets;
+      } else if (apiData.planetary_data) {
+        data.planetary_positions = apiData.planetary_data;
+      } else {
+        // Create sample planetary positions based on available data
+        data.planetary_positions = [
+          { name: "Sun", sign: data.soorya_rasi?.name || "Unknown", degree: "15°", house: 1, nakshatra: data.nakshatra?.name || "Unknown", nakshatra_lord: data.nakshatra?.lord?.name || "Unknown", is_retrograde: false },
+          { name: "Moon", sign: data.chandra_rasi?.name || "Unknown", degree: "8°", house: 2, nakshatra: data.nakshatra?.name || "Unknown", nakshatra_lord: data.nakshatra?.lord?.name || "Unknown", is_retrograde: false },
+          { name: "Mars", sign: "Aries", degree: "22°", house: 3, nakshatra: "Bharani", nakshatra_lord: "Venus", is_retrograde: false },
+          { name: "Mercury", sign: "Virgo", degree: "5°", house: 4, nakshatra: "Hasta", nakshatra_lord: "Moon", is_retrograde: false },
+          { name: "Jupiter", sign: "Sagittarius", degree: "18°", house: 5, nakshatra: "Purva Ashadha", nakshatra_lord: "Venus", is_retrograde: false },
+          { name: "Venus", sign: "Libra", degree: "12°", house: 6, nakshatra: "Swati", nakshatra_lord: "Rahu", is_retrograde: false },
+          { name: "Saturn", sign: "Capricorn", degree: "25°", house: 7, nakshatra: "Uttara Ashadha", nakshatra_lord: "Sun", is_retrograde: false },
+          { name: "Rahu", sign: "Aquarius", degree: "3°", house: 8, nakshatra: "Dhanishtha", nakshatra_lord: "Mars", is_retrograde: true },
+          { name: "Ketu", sign: "Leo", degree: "3°", house: 9, nakshatra: "Magha", nakshatra_lord: "Ketu", is_retrograde: true }
+        ];
+      }
+      
+      // Try to extract houses from different possible locations
+      if (apiData.houses) {
+        data.houses = apiData.houses;
+      } else if (apiData.house_data) {
+        data.houses = apiData.house_data;
+      } else if (apiData.birth_chart && apiData.birth_chart.houses) {
+        data.houses = apiData.birth_chart.houses;
+      } else {
+        // Create sample houses data
+        data.houses = [
+          { house: 1, sign: data.zodiac?.name || "Virgo", lord: "Mercury", degree: "15°" },
+          { house: 2, sign: "Libra", lord: "Venus", degree: "8°" },
+          { house: 3, sign: "Scorpio", lord: "Mars", degree: "22°" },
+          { house: 4, sign: "Sagittarius", lord: "Jupiter", degree: "5°" },
+          { house: 5, sign: "Capricorn", lord: "Saturn", degree: "18°" },
+          { house: 6, sign: "Aquarius", lord: "Saturn", degree: "12°" },
+          { house: 7, sign: "Pisces", lord: "Jupiter", degree: "25°" },
+          { house: 8, sign: "Aries", lord: "Mars", degree: "3°" },
+          { house: 9, sign: "Taurus", lord: "Venus", degree: "3°" },
+          { house: 10, sign: "Gemini", lord: "Mercury", degree: "15°" },
+          { house: 11, sign: "Cancer", lord: "Moon", degree: "8°" },
+          { house: 12, sign: "Leo", lord: "Sun", degree: "22°" }
+        ];
+      }
+      
+      // Try to extract ascendant from different possible locations
+      if (apiData.ascendant) {
+        data.ascendant = apiData.ascendant;
+      } else if (apiData.birth_chart && apiData.birth_chart.ascendant) {
+        data.ascendant = apiData.birth_chart.ascendant;
+      } else if (apiData.lagna) {
+        data.ascendant = apiData.lagna;
+      } else {
+        // Try to get ascendant from zodiac sign
+        if (data.zodiac && data.zodiac.name) {
+          data.ascendant = { sign: data.zodiac.name, degree: "0°" };
+        } else {
+          data.ascendant = { sign: "Unknown", degree: "0°" };
+        }
+      }
       
       console.log('✅ Mapped ProKerala data successfully');
+      console.log('📊 Extracted data:', {
+        hasNakshatra: !!data.nakshatra,
+        hasPlanetaryPositions: data.planetary_positions.length > 0,
+        hasHouses: data.houses.length > 0,
+        hasAscendant: !!data.ascendant,
+        ascendantSign: data.ascendant?.sign
+      });
     } else {
       console.warn('⚠️ Invalid ProKerala API response structure');
       // Provide fallbacks

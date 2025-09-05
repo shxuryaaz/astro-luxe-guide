@@ -497,6 +497,30 @@ const KundliGeneration = () => {
                   </CardContent>
                 </Card>
 
+                {/* Houses */}
+                {kundliData.houses && kundliData.houses.length > 0 && (
+                  <Card className="glass border-primary/30 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
+                    <CardHeader>
+                      <CardTitle className="text-2xl font-serif text-cosmic flex items-center gap-3">
+                        <Globe className="w-6 h-6 text-cyan-400" />
+                        Houses
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {kundliData.houses.map((house: any, index: number) => (
+                          <div key={index} className="p-3 bg-gradient-to-br from-cyan-800/20 to-blue-800/20 rounded-xl border border-cyan-500/20">
+                            <p className="font-semibold text-cyan-300 text-sm">House {house.house}</p>
+                            <p className="text-white text-lg font-medium">{house.sign}</p>
+                            <p className="text-cyan-200 text-xs">Lord: {house.lord}</p>
+                            <p className="text-cyan-200 text-xs">{house.degree}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Additional Information */}
                 {kundliData.additional_info && (
                   <Card className="glass border-primary/30 bg-gradient-to-br from-violet-900/20 to-purple-900/20">
