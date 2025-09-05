@@ -53,8 +53,18 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <NavLink to="/dashboard" className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cosmic">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="p-1 rounded-lg bg-cosmic">
+              <img 
+                src="/astrologo.png" 
+                alt="Astrometry Logo" 
+                className="w-8 h-8 object-contain"
+                onError={(e) => {
+                  // Fallback to Sparkles icon if logo fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling.style.display = 'block';
+                }}
+              />
+              <Sparkles className="w-6 h-6 text-white hidden" />
             </div>
             <span className="text-xl font-serif font-semibold text-white">
               Astrometry

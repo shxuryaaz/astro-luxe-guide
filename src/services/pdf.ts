@@ -34,19 +34,31 @@ export const pdfService = {
     // Add header
     if (includeHeader) {
       doc.setFillColor(44, 62, 80)
-      doc.rect(0, 0, pageWidth, 30, 'F')
+      doc.rect(0, 0, pageWidth, 35, 'F')
+      
+      // Add logo (if available)
+      try {
+        const logoUrl = '/astrologo.png'
+        const img = new Image()
+        img.onload = () => {
+          doc.addImage(img, 'PNG', margin, 5, 25, 25)
+        }
+        img.src = logoUrl
+      } catch (error) {
+        console.log('Logo not available, using text only')
+      }
       
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(18)
       doc.setFont('helvetica', 'bold')
-      doc.text('Astrometry', margin, 20)
+      doc.text('Astrometry', margin + 30, 20)
       
       doc.setFontSize(12)
-      doc.text('Bhrigu Nandi Nadi Reading', margin, 28)
+      doc.text('Bhrigu Nandi Nadi Reading', margin + 30, 28)
       
       // Reset text color
       doc.setTextColor(0, 0, 0)
-      yPosition = 40
+      yPosition = 45
     }
 
     // Add title
@@ -177,21 +189,20 @@ export const pdfService = {
       });
 
     const content = `
-# Astrological Reading - Bhrigu Nandi Nadi
+# Astrological Reading - BNN
 
-**Client Information:**
-- Name: ${userDetails.name}
-- Date of Birth: ${userDetails.dateOfBirth}
-- Time of Birth: ${userDetails.timeOfBirth}
-- Place of Birth: ${userDetails.placeOfBirth}
+## Client Information
+- **Name:** ${userDetails.name}
+- **Date of Birth:** ${userDetails.dateOfBirth}
+- **Time of Birth:** ${userDetails.timeOfBirth}
+- **Place of Birth:** ${userDetails.placeOfBirth}
 
-**Question:** ${question.text}
-**Category:** ${question.category}
-**System:** Bhrigu Nandi Nadi (BNN)
+## Question Analysis
+- **Question:** ${question.text}
+- **Category:** ${question.category}
+- **System:** Bhrigu Nandi Nadi (BNN)
 
----
-
-## Planetary Positions
+## Key Planetary Positions
 
 ${planetaryPositions && Array.isArray(planetaryPositions) && planetaryPositions.length > 0 
   ? planetaryPositions.map(planet => {
@@ -201,17 +212,13 @@ ${planetaryPositions && Array.isArray(planetaryPositions) && planetaryPositions.
       const house = planet.house || 'Unknown';
       const nakshatra = planet.nakshatra || 'Unknown';
       const isRetrograde = planet.is_retrograde ? ' (Retrograde)' : '';
-      return `- ${name}: ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`;
+      return `- **${name}:** ${sign} ${degree} in ${house}th house, Nakshatra: ${nakshatra}${isRetrograde}`;
     }).join('\n')
   : 'Planetary positions not available from ProKerala API'}
 
----
-
-## Reading
+## BNN Astrological Reading
 
 ${reading}
-
----
 
 ## Important Notes
 

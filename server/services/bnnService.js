@@ -293,7 +293,7 @@ Later Phase (40+ years): [What to expect based on BNN rules from context].
 
 ✅ **[Category] Prediction Summary**
 
-[User's actual name from the provided data] is [likely/unlikely] to [struggle/succeed] with [category]; [summary of key indicators from BNN context].
+[PERSON_NAME] is [likely/unlikely] to [struggle/succeed] with [category]; [summary of key indicators from BNN context].
 
 [Main sources of success/challenges] will be [specific areas based on ACTUAL planetary positions from user's chart].
 
@@ -391,6 +391,8 @@ CRITICAL INSTRUCTIONS:
 6. Use the actual planetary positions from ProKerala API for accurate readings
 7. ALWAYS use the person's actual name "${name}" in your response - NEVER use "User" or "the user"
 8. In the Prediction Summary section, start with "${name} is..." not "User is..."
+9. Replace [PERSON_NAME] in the template with "${name}" - this is CRITICAL
+10. NEVER use "User" anywhere in your response - always use "${name}"
 
 Please provide a comprehensive BNN reading based on the above ProKerala data and BNN astrology principles.`;
   
