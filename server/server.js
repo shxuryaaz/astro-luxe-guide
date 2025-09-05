@@ -88,7 +88,26 @@ app.get('/health', (req, res) => {
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     service: 'Astro Oracle Backend',
-    version: '1.0.0'
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || 3001
+  });
+});
+
+// Additional health check for debugging
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'Astro Oracle Backend API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || 3001,
+    endpoints: {
+      bnn: '/api/bnn/generate-reading',
+      prokerala: '/api/prokerala/*',
+      health: '/health'
+    }
   });
 });
 
@@ -120,9 +139,12 @@ app.post('/api/bnn/process-pdf', upload.single('pdf'), async (req, res) => {
 // BNN reading generation endpoint
 app.post('/api/bnn/generate-reading', async (req, res) => {
   try {
+    console.log('🔮 BNN endpoint hit - Request body:', JSON.stringify(req.body, null, 2));
+    
     const { question, kundliData } = req.body;
     
     if (!question || !kundliData) {
+      console.log('❌ Missing required fields:', { question: !!question, kundliData: !!kundliData });
       return res.status(400).json({ 
         error: 'Question and kundli data are required' 
       });
@@ -132,6 +154,8 @@ app.post('/api/bnn/generate-reading', async (req, res) => {
     
     // Generate the reading
     const reading = await generateBNNReading(question, kundliData);
+    
+    console.log('✅ BNN reading generated successfully');
     
     res.json({
       success: true,
@@ -146,9 +170,11 @@ app.post('/api/bnn/generate-reading', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error generating BNN reading:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Failed to generate BNN reading',
-      details: error.message 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
