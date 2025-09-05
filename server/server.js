@@ -171,20 +171,80 @@ app.get('/api/bnn/status', async (req, res) => {
 app.post('/api/prokerala/*', async (req, res) => {
   try {
     const targetPath = req.params[0];
-    const targetUrl = `https://api.prokerala.com/v2/astrology/${targetPath}`;
     
-    console.log(`🔄 Proxying request to: ${targetUrl}`);
-    console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
+    // Map our endpoints to ProKerala API endpoints
+    const endpointMap = {
+      'coordinates': ['geocoding', 'coordinates'],
+      'kundli': ['birth-chart', 'kundli', 'horoscope']
+    };
     
-    const response = await fetch(targetUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PROKERALA_API_KEY}`,
-        'X-API-KEY': process.env.PROKERALA_API_KEY
-      },
-      body: JSON.stringify(req.body)
-    });
+    const possibleEndpoints = endpointMap[targetPath] || [targetPath];
+    let response = null;
+    let lastError = null;
+    
+    // Try different endpoint names
+    for (const endpoint of possibleEndpoints) {
+      let targetUrl = `https://api.prokerala.com/v2/astrology/${endpoint}`;
+      
+      console.log(`🔄 Trying endpoint: ${targetUrl}`);
+      console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
+      
+      // Convert POST body to GET query parameters for ProKerala API
+      let queryParams = '';
+      if (req.body) {
+        if (targetPath === 'coordinates' && req.body.place) {
+          queryParams = `?place=${encodeURIComponent(req.body.place)}`;
+        } else if (targetPath === 'kundli' && req.body.birthDetails) {
+          const details = req.body.birthDetails;
+          const params = new URLSearchParams();
+          
+          // Format datetime for ProKerala API
+          const dateTime = `${details.dateOfBirth}T${details.timeOfBirth}:00+05:30`; // Assuming IST timezone
+          params.append('datetime', dateTime);
+          
+          if (details.coordinates) {
+            params.append('coordinates', `${details.coordinates.latitude},${details.coordinates.longitude}`);
+          }
+          
+          // Add other parameters
+          params.append('ayanamsa', '1'); // Lahiri Ayanamsa
+          params.append('la', 'en'); // Language
+          if (details.gender) {
+            params.append('gender', details.gender);
+          }
+          
+          queryParams = `?${params.toString()}`;
+        }
+      }
+      
+      targetUrl += queryParams;
+      console.log(`🔗 Final URL: ${targetUrl}`);
+      
+      try {
+        response = await fetch(targetUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${process.env.PROKERALA_API_KEY}`,
+            'X-API-KEY': process.env.PROKERALA_API_KEY
+          }
+        });
+        
+        if (response.ok) {
+          console.log(`✅ Success with endpoint: ${endpoint}`);
+          break;
+        } else {
+          console.log(`❌ Failed with endpoint: ${endpoint} (${response.status})`);
+          lastError = response;
+        }
+      } catch (error) {
+        console.log(`❌ Error with endpoint: ${endpoint}`, error.message);
+        lastError = error;
+      }
+    }
+    
+    if (!response || !response.ok) {
+      response = lastError;
+    }
     
     console.log(`📥 Response status: ${response.status}`);
     console.log(`📥 Response headers:`, Object.fromEntries(response.headers.entries()));
