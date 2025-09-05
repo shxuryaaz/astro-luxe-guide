@@ -288,7 +288,17 @@ const Dashboard = () => {
           <Card className="group hover:scale-105 transition-all duration-500 bg-slate-900/50 border-white/10 backdrop-blur-sm">
             <CardContent className="p-8 text-center space-y-4">
               <div className="p-4 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 w-fit mx-auto group-hover:scale-110 transition-transform">
-                <Sparkles className="w-8 h-8 text-white" />
+                <img 
+                  src="/astrologo.jpg" 
+                  alt="Astrometry Logo" 
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to Sparkles icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling.style.display = 'block';
+                  }}
+                />
+                <Sparkles className="w-8 h-8 text-white hidden" />
               </div>
               <h3 className="text-xl font-serif font-semibold text-white">Generate Kundli</h3>
               <p className="text-gray-200">

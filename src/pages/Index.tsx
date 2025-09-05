@@ -96,8 +96,18 @@ const Index = () => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6 lg:p-8">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center p-1">
+            <img 
+              src="/astrologo.jpg" 
+              alt="Astrometry Logo" 
+              className="w-6 h-6 object-contain"
+              onError={(e) => {
+                // Fallback to Sparkles icon if logo fails to load
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling.style.display = 'block';
+              }}
+            />
+            <Sparkles className="w-5 h-5 text-white hidden" />
           </div>
           <span className="text-xl font-bold text-white">Astrometry</span>
         </div>
