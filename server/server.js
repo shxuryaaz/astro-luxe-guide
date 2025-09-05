@@ -167,10 +167,55 @@ app.get('/api/bnn/status', async (req, res) => {
   }
 });
 
+// ProKerala API access token cache
+let prokeralaAccessToken = null;
+let tokenExpiry = null;
+
+// Function to get ProKerala access token
+async function getProkeralaAccessToken() {
+  try {
+    // Check if we have a valid cached token
+    if (prokeralaAccessToken && tokenExpiry && Date.now() < tokenExpiry) {
+      return prokeralaAccessToken;
+    }
+
+    console.log('🔑 Getting new ProKerala access token...');
+    
+    const tokenResponse = await fetch('https://api.prokerala.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: process.env.PROKERALA_API_KEY,
+        client_secret: process.env.PROKERALA_CLIENT_SECRET
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error(`Token request failed: ${tokenResponse.status}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    prokeralaAccessToken = tokenData.access_token;
+    tokenExpiry = Date.now() + (tokenData.expires_in * 1000) - 60000; // 1 minute buffer
+    
+    console.log('✅ ProKerala access token obtained');
+    return prokeralaAccessToken;
+  } catch (error) {
+    console.error('❌ Error getting ProKerala access token:', error);
+    throw error;
+  }
+}
+
 // ProKerala API proxy endpoint
 app.post('/api/prokerala/*', async (req, res) => {
   try {
     const targetPath = req.params[0];
+    
+    // Get access token
+    const accessToken = await getProkeralaAccessToken();
     
     // Map our endpoints to ProKerala API endpoints
     const endpointMap = {
@@ -224,8 +269,8 @@ app.post('/api/prokerala/*', async (req, res) => {
         response = await fetch(targetUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${process.env.PROKERALA_API_KEY}`,
-            'X-API-KEY': process.env.PROKERALA_API_KEY
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json'
           }
         });
         
