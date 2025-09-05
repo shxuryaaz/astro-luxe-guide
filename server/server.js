@@ -174,6 +174,7 @@ app.post('/api/prokerala/*', async (req, res) => {
     const targetUrl = `https://api.prokerala.com/v2/${targetPath}`;
     
     console.log(`🔄 Proxying request to: ${targetUrl}`);
+    console.log(`📤 Request body:`, JSON.stringify(req.body, null, 2));
     
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -184,7 +185,43 @@ app.post('/api/prokerala/*', async (req, res) => {
       body: JSON.stringify(req.body)
     });
     
+    console.log(`📥 Response status: ${response.status}`);
+    console.log(`📥 Response headers:`, Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ ProKerala API error: ${response.status} - ${errorText}`);
+      return res.status(response.status).json({
+        error: 'ProKerala API error',
+        status: response.status,
+        details: errorText
+      });
+    }
+    
     const data = await response.json();
+    console.log(`📥 Response data:`, JSON.stringify(data, null, 2));
+    
+    // Validate critical fields and provide fallbacks
+    if (data && typeof data === 'object') {
+      // Ensure ascendant field exists
+      if (!data.ascendant || !data.ascendant.sign || !data.ascendant.degree) {
+        console.warn('⚠️ Ascendant field missing or invalid, providing fallback');
+        data.ascendant = { sign: "Unknown", degree: "0°" };
+      }
+      
+      // Ensure planetary_positions exists
+      if (!data.planetary_positions || !Array.isArray(data.planetary_positions)) {
+        console.warn('⚠️ Planetary positions missing or invalid, providing fallback');
+        data.planetary_positions = [];
+      }
+      
+      // Ensure houses exists
+      if (!data.houses || !Array.isArray(data.houses)) {
+        console.warn('⚠️ Houses missing or invalid, providing fallback');
+        data.houses = [];
+      }
+    }
+    
     res.json(data);
     
   } catch (error) {

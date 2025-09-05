@@ -58,6 +58,22 @@ export const kundliService = {
         coordinates
       });
 
+      console.log('Generated Kundli data:', JSON.stringify(kundliData, null, 2));
+
+      // Validate and provide fallbacks for undefined fields
+      const validatedAscendant = kundliData.ascendant && 
+        kundliData.ascendant.sign && 
+        kundliData.ascendant.degree 
+        ? kundliData.ascendant 
+        : { sign: "Unknown", degree: "0°" };
+
+      const validatedPlanetaryPositions = kundliData.planetary_positions || [];
+      const validatedHouses = kundliData.houses || [];
+
+      console.log('Validated ascendant:', validatedAscendant);
+      console.log('Validated planetary positions count:', validatedPlanetaryPositions.length);
+      console.log('Validated houses count:', validatedHouses.length);
+
       // Create Kundli document
       const kundliId = `kundli_${Date.now()}`;
       const kundli: Kundli = {
@@ -69,15 +85,15 @@ export const kundliService = {
         placeOfBirth: userDetails.placeOfBirth,
         gender: userDetails.gender,
         coordinates,
-        ascendant: kundliData.ascendant,
-        planetaryPositions: kundliData.planetary_positions,
-        houses: kundliData.houses,
-        // Include all ProKerala data
-        nakshatra: kundliData.nakshatra,
-        chandra_rasi: kundliData.chandra_rasi,
-        soorya_rasi: kundliData.soorya_rasi,
-        zodiac: kundliData.zodiac,
-        additional_info: kundliData.additional_info,
+        ascendant: validatedAscendant,
+        planetaryPositions: validatedPlanetaryPositions,
+        houses: validatedHouses,
+        // Include all ProKerala data with null fallbacks for undefined values
+        nakshatra: kundliData.nakshatra || null,
+        chandra_rasi: kundliData.chandra_rasi || null,
+        soorya_rasi: kundliData.soorya_rasi || null,
+        zodiac: kundliData.zodiac || null,
+        additional_info: kundliData.additional_info || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

@@ -69,6 +69,11 @@ export const prokeralaService = {
                 coordinates = await this.getCoordinates(birthDetails.placeOfBirth);
               }
 
+              console.log('Sending Kundli request with birth details:', {
+                ...birthDetails,
+                coordinates
+              });
+
               const response = await backendApi.post('/api/prokerala/kundli', {
                 birthDetails: {
                   ...birthDetails,
@@ -76,10 +81,35 @@ export const prokeralaService = {
                 }
               });
 
-              return response.data;
+              console.log('ProKerala API response status:', response.status);
+              console.log('ProKerala API response data:', JSON.stringify(response.data, null, 2));
+
+              // Validate the response data
+              if (!response.data) {
+                throw new Error('Empty response from ProKerala API');
+              }
+
+              // Ensure required fields exist with fallbacks
+              const kundliData = {
+                ascendant: response.data.ascendant || { sign: "Unknown", degree: "0°" },
+                planetary_positions: response.data.planetary_positions || [],
+                houses: response.data.houses || [],
+                nakshatra: response.data.nakshatra || null,
+                chandra_rasi: response.data.chandra_rasi || null,
+                soorya_rasi: response.data.soorya_rasi || null,
+                zodiac: response.data.zodiac || null,
+                additional_info: response.data.additional_info || null,
+                ...response.data
+              };
+
+              return kundliData;
             } catch (error) {
               console.error('Error generating Kundli:', error);
-              throw new Error('Failed to generate Kundli');
+              if (error.response) {
+                console.error('API Error Response:', error.response.data);
+                console.error('API Error Status:', error.response.status);
+              }
+              throw new Error(`Failed to generate Kundli: ${error.message}`);
             }
           },
 
